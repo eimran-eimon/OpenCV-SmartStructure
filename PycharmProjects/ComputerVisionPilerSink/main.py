@@ -76,6 +76,7 @@ while True:
 				1, (255, 0, 0), 3)
 	cv2.resize(img, (600, 600))
 	cv2.imshow('frame', img)
+	out.write(img)
 	k = cv2.waitKey(30) & 0xff
 	if k == 27:
 		break
