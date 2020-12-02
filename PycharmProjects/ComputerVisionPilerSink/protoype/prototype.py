@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import xlsxwriter
+from datetime import datetime
 
 # input video or live feed
 cap = cv2.VideoCapture('pilevideo.mp4')
@@ -26,6 +28,26 @@ rect = (0, 0, 0, 0)
 startPoint = False
 endPoint = False
 drawing = False
+
+# excel config
+# Create a workbook and add a worksheet.
+workbook = xlsxwriter.Workbook('data.xlsx')
+worksheet = workbook.add_worksheet()
+worksheet.set_column(0, 4, 30)
+header_format = workbook.add_format({
+	'bold': True,
+	'text_wrap': True,
+	'align': 'center',
+	'fg_color': '#D7E4BC',
+	'border': 1})
+# Start from the first cell. Rows and columns are zero indexed.
+row = 0
+col = 0
+# Add a bold format to use to highlight cells.
+center = workbook.add_format({'align': 'center'})
+worksheet.write(row, col, 'Date-Time', header_format)
+worksheet.write(row, col + 1, 'Piller Sinked', header_format)
+row = row + 1
 
 
 def on_mouse(event, x, y, flags, params):
@@ -100,12 +122,17 @@ while True:
 
 		# 15 pixels movement in Y direction = 1ft,
 		# later we can generalized it by measuring the distance between red lines
+		sinked = total_del_y / 15
 		cv2.putText(frame, "Sinked: {:.2f}ft".format(total_del_y / 15),
 					(50, 50), cv2.FONT_HERSHEY_SIMPLEX,
 					1, (255, 0, 0), 3)
+		worksheet.write(row, col, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), center)
+		worksheet.write(row, col + 1, sinked, center)
+
 		# count the frame no
 		frame_no = frame_no + 1
-
+		# increase excel row number
+		row = row + 1
 	cv2.imshow('frame', frame)
 	out.write(frame)
 
@@ -115,4 +142,5 @@ while True:
 		# release resources
 		cv2.destroyAllWindows()
 		cap.release()
+		workbook.close()
 		break
