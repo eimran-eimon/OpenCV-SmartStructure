@@ -1,14 +1,16 @@
+import sys
+
 import cv2
 import numpy as np
 import xlsxwriter
 from datetime import datetime
+import os
 
 # input video or live feed
 cap = cv2.VideoCapture('pilevideo.mp4')
 
 # get the template input from user
 template = cv2.imread('template.png', 0)
-w, h = template.shape[::-1]
 
 # for saving the output result
 fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
@@ -18,10 +20,7 @@ out = cv2.VideoWriter('output.mp4', fourcc, 20, (frame_width, frame_height), Tru
 
 # config data for the program
 total_del_y = 0
-prev_top_left_y = 0
 frame_no = 0
-temp_prev_y_coord = np.zeros(10)
-prev_current_y = -99999
 
 # for selecting the ROI
 rect = (0, 0, 0, 0)
@@ -70,6 +69,19 @@ def on_mouse(event, x, y, flags, params):
 			drawing = False
 
 
+def generate_templates(no_of_template):
+	roi_h = abs(rect[1] - rect[3])
+	offset_y = roi_h / no_of_template
+	templates_coord = []
+
+	for y in np.linspace(0, roi_h, no_of_template + 1).tolist()[:-1]:
+		y1 = int(round(y)) + rect[1]
+		y2 = int(round(y + offset_y)) + rect[1]
+		templates_coord.append([(rect[0], y1), (rect[2], y2)])
+
+	return templates_coord
+
+
 while True:
 
 	ret, frame = cap.read()
@@ -80,10 +92,25 @@ while True:
 
 	# drawing rectangle on mouse move
 	if startPoint is True:
-		cv2.rectangle(frame, (rect[0], rect[1]), (rect[2], rect[3]), (255, 0, 255), 2)
+		cv2.rectangle(frame, (rect[0], rect[1]), (rect[2], rect[3]), (200, 200, 200), 2)
 
 	if startPoint is True and endPoint is True:
-		print(rect)
+		if frame_no % 1000 == 0:
+			# reset constrains
+			temp_prev_y_coord = np.zeros(10)
+			prev_current_y = -999999
+			prev_top_left_y = 0
+
+			template_coord = generate_templates(2)
+			"""for temp_rect in template_coord:
+				cv2.rectangle(frame, (temp_rect[0][0], temp_rect[0][1]), (temp_rect[1][0], temp_rect[1][1]), (0, 0, 255), 2)"""
+
+			# select the upper one
+			upper_template = template_coord[0]
+			# extract the template
+			template = frame_gray[upper_template[0][1]:upper_template[1][1], upper_template[0][0]:upper_template[1][0]]
+
+			cv2.imshow("template", template)
 		# Perform match operations
 		res = cv2.matchTemplate(frame_gray[rect[1]:rect[3], rect[0]:rect[2]], template, cv2.TM_SQDIFF_NORMED)
 
@@ -113,19 +140,21 @@ while True:
 				prev_current_y = top_left[1]
 				total_del_y = total_del_y + del_y
 
-		print(f"Current Y_coord= {top_left[1]}")
+		# print(f"Current Y_coord= {top_left[1]}")
 		# print(f"DEL Y= {total_del_y}")
 
 		# draw the rectangle box
+		w, h = template.shape[::-1]
 		bottom_right = (top_left[0] + w, top_left[1] + h)
-		cv2.rectangle(frame[rect[1]:rect[3], rect[0]:rect[2]], top_left, bottom_right, 255, 2)
+		cv2.rectangle(frame[rect[1]:rect[3], rect[0]:rect[2]], top_left, bottom_right, (255, 0, 0), 2)
 
 		# 15 pixels movement in Y direction = 1ft,
 		# later we can generalized it by measuring the distance between red lines
 		sinked = total_del_y / 15
 		cv2.putText(frame, "Sinked: {:.2f}ft".format(total_del_y / 15),
 					(50, 50), cv2.FONT_HERSHEY_SIMPLEX,
-					1, (255, 0, 0), 3)
+					1, (255, 0, 0), 2)
+
 		worksheet.write(row, col, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), center)
 		worksheet.write(row, col + 1, sinked, center)
 
@@ -133,9 +162,23 @@ while True:
 		frame_no = frame_no + 1
 		# increase excel row number
 		row = row + 1
+
+	if startPoint is False and endPoint is False:
+		cv2.putText(frame, "Please draw a rectangle",
+					(50, 60), cv2.FONT_HERSHEY_SIMPLEX,
+					1, (255, 0, 0), 2)
+	cv2.putText(frame, "Press r - Restart the program",
+				(50, 100), cv2.FONT_HERSHEY_SIMPLEX,
+				0.8, (255, 200, 0), 2)
+	cv2.putText(frame, "Press ESC - Quit the program",
+				(50, 140), cv2.FONT_HERSHEY_SIMPLEX,
+				0.8, (255, 200, 0), 2)
+
 	cv2.imshow('frame', frame)
 	out.write(frame)
 
+	if cv2.waitKey(30) == ord('r'):
+		os.execl(sys.executable, sys.executable, *sys.argv)
 	# if 'ESC' is pressed, quit the program
 	k = cv2.waitKey(30) & 0xff
 	if k == 27:
