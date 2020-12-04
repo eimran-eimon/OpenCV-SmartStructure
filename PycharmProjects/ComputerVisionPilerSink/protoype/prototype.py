@@ -1,16 +1,14 @@
 import sys
-
 import cv2
 import numpy as np
 import xlsxwriter
 from datetime import datetime
 import os
+import get_red_line_distance
+import math
 
 # input video or live feed
 cap = cv2.VideoCapture('pilevideo.mp4')
-
-# get the template input from user
-template = cv2.imread('template.png', 0)
 
 # for saving the output result
 fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
@@ -48,6 +46,8 @@ worksheet.write(row, col, 'Date-Time', header_format)
 worksheet.write(row, col + 1, 'Piller Sinked', header_format)
 row = row + 1
 
+red_line_dist = None
+
 
 def on_mouse(event, x, y, flags, params):
 	global rect, startPoint, endPoint, drawing
@@ -82,6 +82,10 @@ def generate_templates(no_of_template):
 	return templates_coord
 
 
+def adjust_brightness_contrast(img):
+	return img
+
+
 while True:
 
 	ret, frame = cap.read()
@@ -92,9 +96,24 @@ while True:
 
 	# drawing rectangle on mouse move
 	if startPoint is True:
-		cv2.rectangle(frame, (rect[0], rect[1]), (rect[2], rect[3]), (200, 200, 200), 2)
+		cv2.rectangle(frame, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0), 2)
 
 	if startPoint is True and endPoint is True:
+
+		if red_line_dist is None:
+			# get distance between red lines
+			full_rectangle = frame[0:rect[3], rect[0]:rect[2]]
+			red_line_dist = get_red_line_distance.get_distance_between_red_lines(full_rectangle, 1)
+
+			# try one more time with adjusted image
+			if math.isnan(red_line_dist) or red_line_dist is None:
+				# adjust brightness and contrast
+				adjust_rect = adjust_brightness_contrast(full_rectangle)
+				red_line_dist = get_red_line_distance.get_distance_between_red_lines(adjust_rect, 3)
+				if math.isnan(red_line_dist) or red_line_dist is None:
+					# restart the program
+					os.execl(sys.executable, sys.executable, *sys.argv)
+
 		if frame_no % 1000 == 0:
 			# reset constrains
 			temp_prev_y_coord = np.zeros(10)
@@ -110,7 +129,6 @@ while True:
 			# extract the template
 			template = frame_gray[upper_template[0][1]:upper_template[1][1], upper_template[0][0]:upper_template[1][0]]
 
-			cv2.imshow("template", template)
 		# Perform match operations
 		res = cv2.matchTemplate(frame_gray[rect[1]:rect[3], rect[0]:rect[2]], template, cv2.TM_SQDIFF_NORMED)
 
@@ -148,10 +166,8 @@ while True:
 		bottom_right = (top_left[0] + w, top_left[1] + h)
 		cv2.rectangle(frame[rect[1]:rect[3], rect[0]:rect[2]], top_left, bottom_right, (255, 0, 0), 2)
 
-		# 15 pixels movement in Y direction = 1ft,
-		# later we can generalized it by measuring the distance between red lines
-		sinked = total_del_y / 15
-		cv2.putText(frame, "Sinked: {:.2f}ft".format(total_del_y / 15),
+		sinked = total_del_y / red_line_dist
+		cv2.putText(frame, "Sinked: {:.2f}ft".format(sinked),
 					(50, 50), cv2.FONT_HERSHEY_SIMPLEX,
 					1, (255, 0, 0), 2)
 
