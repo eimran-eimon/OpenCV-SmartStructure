@@ -8,7 +8,7 @@ import get_red_line_distance
 import math
 
 # input video or live feed
-cap = cv2.VideoCapture('pilevideo.mp4')
+cap = cv2.VideoCapture('pilevideo2.mp4')
 
 # for saving the output result
 fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
@@ -105,6 +105,7 @@ def img_estimate(img, threshold):
 while True:
 
 	ret, frame = cap.read()
+	org_frame = np.array(frame).copy()
 	frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 	if img_estimate(frame, 200) == 'light':
@@ -123,7 +124,7 @@ while True:
 
 		if red_line_dist is None:
 			# get distance between red lines
-			full_rectangle = frame[0:frame_height, rect[0]:rect[2]]
+			full_rectangle = org_frame[0:frame_height, rect[0] - 10: rect[2] + 10]
 			# adjust brightness and contrast
 			adjust_rect = adjust_brightness_contrast(full_rectangle, 100, 50)
 			red_line_dist = get_red_line_distance.get_distance_between_red_lines(adjust_rect, 2)
