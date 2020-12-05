@@ -47,6 +47,8 @@ worksheet.write(row, col + 1, 'Piller Sinked', header_format)
 row = row + 1
 
 red_line_dist = None
+prev_sinked = -999999
+template = None
 
 
 def on_mouse(event, x, y, flags, params):
@@ -82,14 +84,30 @@ def generate_templates(no_of_template):
 	return templates_coord
 
 
-def adjust_brightness_contrast(img):
+def adjust_brightness_contrast(img, brightness, contrast):
+	img = np.int16(img)
+	img = img * (contrast / 127 + 1) - contrast + brightness
+	img = np.clip(img, 0, 255)
+	img = np.uint8(img)
 	return img
+
+
+def img_estimate(img, threshold):
+	is_light = np.mean(img) > threshold
+	return 'light' if is_light else 'dark'
 
 
 while True:
 
 	ret, frame = cap.read()
 	frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+	if img_estimate(frame, 200) == 'light':
+		print('l')
+		frame = adjust_brightness_contrast(frame, 0, 50)
+	elif img_estimate(frame, 100) == 'dark':
+		print('d')
+		frame = adjust_brightness_contrast(frame, 50, 0)
 
 	cv2.namedWindow('frame')
 	cv2.setMouseCallback('frame', on_mouse)
@@ -102,19 +120,19 @@ while True:
 
 		if red_line_dist is None:
 			# get distance between red lines
-			full_rectangle = frame[0:rect[3], rect[0]:rect[2]]
-			red_line_dist = get_red_line_distance.get_distance_between_red_lines(full_rectangle, 1)
+			full_rectangle = frame[0:frame_height, rect[0]:rect[2]]
+			# adjust brightness and contrast
+			adjust_rect = adjust_brightness_contrast(full_rectangle, 100, 40)
+			red_line_dist = get_red_line_distance.get_distance_between_red_lines(adjust_rect, 2)
 
 			# try one more time with adjusted image
 			if math.isnan(red_line_dist) or red_line_dist is None:
-				# adjust brightness and contrast
-				adjust_rect = adjust_brightness_contrast(full_rectangle)
-				red_line_dist = get_red_line_distance.get_distance_between_red_lines(adjust_rect, 3)
+				red_line_dist = get_red_line_distance.get_distance_between_red_lines(full_rectangle, 1)
 				if math.isnan(red_line_dist) or red_line_dist is None:
 					# restart the program
 					os.execl(sys.executable, sys.executable, *sys.argv)
 
-		if frame_no % 1000 == 0:
+		if frame_no % 1000000 == 0:
 			# reset constrains
 			temp_prev_y_coord = np.zeros(10)
 			prev_current_y = -999999
@@ -128,6 +146,7 @@ while True:
 			upper_template = template_coord[0]
 			# extract the template
 			template = frame_gray[upper_template[0][1]:upper_template[1][1], upper_template[0][0]:upper_template[1][0]]
+			cv2.imshow('template', template)
 
 		# Perform match operations
 		res = cv2.matchTemplate(frame_gray[rect[1]:rect[3], rect[0]:rect[2]], template, cv2.TM_SQDIFF_NORMED)
@@ -154,30 +173,32 @@ while True:
 
 			# assuming, del Y should be a small number between 0 to 1
 			# and the only movement of the piller will be in the bottom direction
-			if 0 <= del_y <= 1 and top_left[1] > prev_current_y:
+			if 0 <= del_y <= 2 and top_left[1] > prev_current_y:
 				prev_current_y = top_left[1]
-				total_del_y = total_del_y + del_y
+				total_del_y = total_del_y + math.ceil(del_y)
 
 		# print(f"Current Y_coord= {top_left[1]}")
-		# print(f"DEL Y= {total_del_y}")
-
-		# draw the rectangle box
+		# print(f"Prev Y_coord= {prev_current_y}")
 		w, h = template.shape[::-1]
+		print(f"DEL Y= {total_del_y}")
+		print(f"movement = {top_left[1]}")
+		# draw the rectangle box
 		bottom_right = (top_left[0] + w, top_left[1] + h)
 		cv2.rectangle(frame[rect[1]:rect[3], rect[0]:rect[2]], top_left, bottom_right, (255, 0, 0), 2)
 
-		sinked = total_del_y / red_line_dist
+		sinked = top_left[1] / red_line_dist
 		cv2.putText(frame, "Sinked: {:.2f}ft".format(sinked),
 					(50, 50), cv2.FONT_HERSHEY_SIMPLEX,
 					1, (255, 0, 0), 2)
 
-		worksheet.write(row, col, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), center)
-		worksheet.write(row, col + 1, sinked, center)
-
+		if sinked > prev_sinked:
+			worksheet.write(row, col, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), center)
+			worksheet.write(row, col + 1, sinked, center)
+			prev_sinked = sinked
+			# increase excel row number
+			row = row + 1
 		# count the frame no
 		frame_no = frame_no + 1
-		# increase excel row number
-		row = row + 1
 
 	if startPoint is False and endPoint is False:
 		cv2.putText(frame, "Please draw a rectangle",

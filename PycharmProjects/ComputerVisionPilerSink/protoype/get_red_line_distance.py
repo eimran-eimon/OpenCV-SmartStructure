@@ -27,14 +27,14 @@ def get_distance_between_red_lines(img, dilate_itr):
 			cv2.line(org_img, (lines[i][0][0], lines[i][0][1]), (lines[i][0][2], lines[i][0][3]), (0, 0, 255), 2, cv2.LINE_AA)
 
 	y1_set = set(np.diff(sorted(lines_segment_y1)))
-	y1_reduced_list = [y1 for y1 in y1_set if (y1 >= 15) and (y1 <= 30)]
+	y1_reduced_list = [y1 for y1 in y1_set if (y1 >= 15) and (y1 <= 25)]
 	mean_y1 = np.mean(y1_reduced_list)
 
 	y2_set = set(np.diff(sorted(lines_segment_y2)))
-	y2_reduced_list = [y2 for y2 in y2_set if (y2 >= 15) and (y2 <= 30)]
+	y2_reduced_list = [y2 for y2 in y2_set if (y2 >= 15) and (y2 <= 25)]
 	mean_y2 = np.mean(y2_reduced_list)
 	mean_y = np.mean([mean_y1, mean_y2])
-	print(f"Distance, 1ft={mean_y} px")
+	print(f"Distance, 1ft = {mean_y} px")
 	if not math.isnan(mean_y) or mean_y is not None:
 		cv2.imshow('detected_edges', org_img)
 
