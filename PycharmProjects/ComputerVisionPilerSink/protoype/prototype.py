@@ -53,7 +53,8 @@ template_match_coord = []
 no_of_template = 2
 already_sinked = 0
 sinked = 0
-prev_top_left = - math.inf
+prev_top_left = -math.inf
+noisy_coord_count = 0
 
 
 def on_mouse(event, x, y, flags, params):
@@ -127,7 +128,7 @@ while True:
 			# get distance between red lines
 			full_rectangle = frame[0:frame_height, rect[0]:rect[2]]
 			# adjust brightness and contrast
-			adjust_rect = adjust_brightness_contrast(full_rectangle, 100, 40)
+			adjust_rect = adjust_brightness_contrast(full_rectangle, 80, 40)
 			red_line_dist = get_red_line_distance.get_distance_between_red_lines(adjust_rect, 2)
 
 			# try one more time with adjusted image
@@ -138,10 +139,12 @@ while True:
 					os.execl(sys.executable, sys.executable, *sys.argv)
 
 		template_h = abs(rect[1] - rect[3]) / no_of_template
-		print(f"Template h = {template_h}")
-		if template is None or (median_del_y + 2 > template_h):
+		# print(f"Template h = {template_h}")
+		if template is None or (median_del_y + 10 > template_h) or noisy_coord_count > 5000:
 			already_sinked = sinked
+			prev_top_left = 0
 			median_del_y = 0
+			noisy_coord_count = 0
 			template_match_coord.clear()
 			template_coord = generate_templates(no_of_template)
 			# select the upper one
@@ -157,12 +160,16 @@ while True:
 		# find the template's location in the video
 		min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 		top_left = min_loc
-		if math.isinf(prev_top_left):
+		print("------------")
+		print(f"Noisy coord = {noisy_coord_count}")
+		print(f"prev top left = {prev_top_left}")
+		print(f"top left = {top_left[1]}")
+		if (abs(top_left[1] - prev_top_left) < 5 and top_left[1] >= prev_top_left) \
+				or prev_top_left == -math.inf or prev_top_left == 0:
 			template_match_coord.append(top_left[1])
 			prev_top_left = top_left[1]
-		if abs(top_left[1] - prev_top_left) < 2 or (top_left[1] - prev_top_left) > 0:
-			template_match_coord.append(top_left[1])
-			prev_top_left = top_left[1]
+		else:
+			noisy_coord_count = noisy_coord_count + 1
 
 		if len(template_match_coord) == 20:
 			median_del_y = np.median(template_match_coord)
@@ -181,7 +188,13 @@ while True:
 		cv2.putText(frame, "Sinked: {:.2f}ft".format(sinked),
 					(50, 50), cv2.FONT_HERSHEY_SIMPLEX,
 					1, (255, 0, 0), 2)
-		print(f"alreday sinked = {already_sinked}")
+		cv2.putText(frame, f"Prev Top Left: {prev_top_left}",
+					(50, 250), cv2.FONT_HERSHEY_SIMPLEX,
+					1, (255, 0, 0), 2)
+		cv2.putText(frame, f"Top Left: {top_left[1]}",
+					(50, 350), cv2.FONT_HERSHEY_SIMPLEX,
+					1, (255, 0, 0), 2)
+		# print(f"alreday sinked = {already_sinked}")
 		if sinked > prev_sinked:
 			worksheet.write(row, col, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), center)
 			worksheet.write(row, col + 1, sinked, center)
