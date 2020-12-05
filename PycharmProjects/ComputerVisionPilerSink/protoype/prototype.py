@@ -8,7 +8,7 @@ import get_red_line_distance
 import math
 
 # input video or live feed
-cap = cv2.VideoCapture('pilevideo.mp4')
+cap = cv2.VideoCapture('pilevideo2.mp4')
 
 # for saving the output result
 fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
@@ -17,7 +17,7 @@ frame_height = int(cap.get(4))
 out = cv2.VideoWriter('output.mp4', fourcc, 20, (frame_width, frame_height), True)
 
 # config data for the program
-total_del_y = 0
+median_del_y = 0
 frame_no = 0
 
 # for selecting the ROI
@@ -49,6 +49,11 @@ row = row + 1
 red_line_dist = None
 prev_sinked = -999999
 template = None
+template_match_coord = []
+no_of_template = 2
+already_sinked = 0
+sinked = 0
+prev_top_left = - math.inf
 
 
 def on_mouse(event, x, y, flags, params):
@@ -71,12 +76,12 @@ def on_mouse(event, x, y, flags, params):
 			drawing = False
 
 
-def generate_templates(no_of_template):
+def generate_templates(template_no):
 	roi_h = abs(rect[1] - rect[3])
-	offset_y = roi_h / no_of_template
+	offset_y = roi_h / template_no
 	templates_coord = []
 
-	for y in np.linspace(0, roi_h, no_of_template + 1).tolist()[:-1]:
+	for y in np.linspace(0, roi_h, template_no + 1).tolist()[:-1]:
 		y1 = int(round(y)) + rect[1]
 		y2 = int(round(y + offset_y)) + rect[1]
 		templates_coord.append([(rect[0], y1), (rect[2], y2)])
@@ -132,16 +137,13 @@ while True:
 					# restart the program
 					os.execl(sys.executable, sys.executable, *sys.argv)
 
-		if frame_no % 1000000 == 0:
-			# reset constrains
-			temp_prev_y_coord = np.zeros(10)
-			prev_current_y = -999999
-			prev_top_left_y = 0
-
-			template_coord = generate_templates(2)
-			"""for temp_rect in template_coord:
-				cv2.rectangle(frame, (temp_rect[0][0], temp_rect[0][1]), (temp_rect[1][0], temp_rect[1][1]), (0, 0, 255), 2)"""
-
+		template_h = abs(rect[1] - rect[3]) / no_of_template
+		print(f"Template h = {template_h}")
+		if template is None or (median_del_y + 2 > template_h):
+			already_sinked = sinked
+			median_del_y = 0
+			template_match_coord.clear()
+			template_coord = generate_templates(no_of_template)
 			# select the upper one
 			upper_template = template_coord[0]
 			# extract the template
@@ -149,48 +151,37 @@ while True:
 			cv2.imshow('template', template)
 
 		# Perform match operations
-		res = cv2.matchTemplate(frame_gray[rect[1]:rect[3], rect[0]:rect[2]], template, cv2.TM_SQDIFF_NORMED)
+		res = cv2.matchTemplate(frame_gray[rect[1]:rect[3], rect[0]:rect[2]], template,
+								cv2.TM_SQDIFF_NORMED)
 
 		# find the template's location in the video
 		min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 		top_left = min_loc
+		if math.isinf(prev_top_left):
+			template_match_coord.append(top_left[1])
+			prev_top_left = top_left[1]
+		if abs(top_left[1] - prev_top_left) < 2 or (top_left[1] - prev_top_left) > 0:
+			template_match_coord.append(top_left[1])
+			prev_top_left = top_left[1]
 
-		# remove noisy calculations
-		# save data from previous ten frames for getting more robust Y coordinate
-		if frame_no > 10:
-			if abs(np.median(temp_prev_y_coord) - prev_current_y) < 5:
-				temp_prev_y_coord[frame_no % 10] = top_left[1]
-			else:
-				temp_prev_y_coord[frame_no % 10] = prev_current_y
-		else:
-			temp_prev_y_coord[frame_no % 10] = top_left[1]
-
-		# calculate the del Y (ten frames interval)
-		if frame_no % 10 == 0 and frame_no != 0:
-			# take the 50th percentile data
-			# so that, some noisy coordinate can't affect the measurement
-			del_y = top_left[1] - np.quantile(temp_prev_y_coord, 0.5)
-
-			# assuming, del Y should be a small number between 0 to 1
-			# and the only movement of the piller will be in the bottom direction
-			if 0 <= del_y <= 2 and top_left[1] > prev_current_y:
-				prev_current_y = top_left[1]
-				total_del_y = total_del_y + math.ceil(del_y)
+		if len(template_match_coord) == 20:
+			median_del_y = np.median(template_match_coord)
+			template_match_coord.clear()
 
 		# print(f"Current Y_coord= {top_left[1]}")
 		# print(f"Prev Y_coord= {prev_current_y}")
 		w, h = template.shape[::-1]
-		print(f"DEL Y= {total_del_y}")
-		print(f"movement = {top_left[1]}")
+		print(f"DEL Y= {median_del_y}")
 		# draw the rectangle box
 		bottom_right = (top_left[0] + w, top_left[1] + h)
+		# print(f"bottom right = {bottom_right[1] + 5}, and end = {rect[3]}")
 		cv2.rectangle(frame[rect[1]:rect[3], rect[0]:rect[2]], top_left, bottom_right, (255, 0, 0), 2)
 
-		sinked = top_left[1] / red_line_dist
+		sinked = already_sinked + (median_del_y / red_line_dist)
 		cv2.putText(frame, "Sinked: {:.2f}ft".format(sinked),
 					(50, 50), cv2.FONT_HERSHEY_SIMPLEX,
 					1, (255, 0, 0), 2)
-
+		print(f"alreday sinked = {already_sinked}")
 		if sinked > prev_sinked:
 			worksheet.write(row, col, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), center)
 			worksheet.write(row, col + 1, sinked, center)
@@ -223,4 +214,5 @@ while True:
 		cv2.destroyAllWindows()
 		cap.release()
 		workbook.close()
+		out.release()
 		break
