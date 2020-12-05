@@ -8,7 +8,7 @@ import get_red_line_distance
 import math
 
 # input video or live feed
-cap = cv2.VideoCapture('pilevideo2.mp4')
+cap = cv2.VideoCapture('pilevideo.mp4')
 
 # for saving the output result
 fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
@@ -54,7 +54,6 @@ no_of_template = 2
 already_sinked = 0
 sinked = 0
 prev_top_left = -math.inf
-noisy_coord_count = 0
 
 
 def on_mouse(event, x, y, flags, params):
@@ -109,10 +108,8 @@ while True:
 	frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 	if img_estimate(frame, 200) == 'light':
-		print('l')
 		frame = adjust_brightness_contrast(frame, 0, 50)
 	elif img_estimate(frame, 100) == 'dark':
-		print('d')
 		frame = adjust_brightness_contrast(frame, 50, 0)
 
 	cv2.namedWindow('frame')
@@ -128,7 +125,7 @@ while True:
 			# get distance between red lines
 			full_rectangle = frame[0:frame_height, rect[0]:rect[2]]
 			# adjust brightness and contrast
-			adjust_rect = adjust_brightness_contrast(full_rectangle, 80, 40)
+			adjust_rect = adjust_brightness_contrast(full_rectangle, 100, 50)
 			red_line_dist = get_red_line_distance.get_distance_between_red_lines(adjust_rect, 2)
 
 			# try one more time with adjusted image
@@ -140,7 +137,7 @@ while True:
 
 		template_h = abs(rect[1] - rect[3]) / no_of_template
 		# print(f"Template h = {template_h}")
-		if template is None or (median_del_y + 10 > template_h) or noisy_coord_count > 5000:
+		if template is None or (median_del_y + 5 > math.floor(template_h / 2)):
 			already_sinked = sinked
 			prev_top_left = 0
 			median_del_y = 0
@@ -154,46 +151,51 @@ while True:
 			cv2.imshow('template', template)
 
 		# Perform match operations
-		res = cv2.matchTemplate(frame_gray[rect[1]:rect[3], rect[0]:rect[2]], template,
-								cv2.TM_SQDIFF_NORMED)
+		res = cv2.matchTemplate(frame_gray[rect[1]:rect[3], rect[0]:rect[2]], template, cv2.TM_SQDIFF_NORMED)
 
 		# find the template's location in the video
 		min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 		top_left = min_loc
-		print("------------")
-		print(f"Noisy coord = {noisy_coord_count}")
-		print(f"prev top left = {prev_top_left}")
-		print(f"top left = {top_left[1]}")
-		if (abs(top_left[1] - prev_top_left) < 5 and top_left[1] >= prev_top_left) \
-				or prev_top_left == -math.inf or prev_top_left == 0:
-			template_match_coord.append(top_left[1])
-			prev_top_left = top_left[1]
-		else:
-			noisy_coord_count = noisy_coord_count + 1
+
+		# change the coord to next best match
+		current_y = top_left[1]
+
+		if (prev_top_left > current_y) or (abs(current_y - prev_top_left) > 5):
+			match_result = np.array(res).flatten()
+			sorted_match_result_idx = np.argsort(match_result)
+			for idx in sorted_match_result_idx:
+				if idx >= prev_top_left:
+					current_y = idx
+					break
+
+		if abs(current_y - prev_top_left) < 5:
+			template_match_coord.append(current_y)
+			prev_top_left = current_y
 
 		if len(template_match_coord) == 20:
 			median_del_y = np.median(template_match_coord)
 			template_match_coord.clear()
 
-		# print(f"Current Y_coord= {top_left[1]}")
+		# print(f"Current Y_coord= {current_y}")
 		# print(f"Prev Y_coord= {prev_current_y}")
 		w, h = template.shape[::-1]
 		print(f"DEL Y= {median_del_y}")
 		# draw the rectangle box
-		bottom_right = (top_left[0] + w, top_left[1] + h)
+		bottom_right = (top_left[0] + w, current_y + h)
 		# print(f"bottom right = {bottom_right[1] + 5}, and end = {rect[3]}")
-		cv2.rectangle(frame[rect[1]:rect[3], rect[0]:rect[2]], top_left, bottom_right, (255, 0, 0), 2)
+		cv2.rectangle(frame[rect[1]:rect[3], rect[0]:rect[2]], (top_left[0], current_y), bottom_right, (255, 0, 0), 2)
 
 		sinked = already_sinked + (median_del_y / red_line_dist)
+
+		# draw an arrow
+		cv2.line(frame, (rect[0] - 50, rect[1]), (rect[0] - 50, int(rect[1] + median_del_y)), (0, 255, 255), 4)
+		cv2.arrowedLine(frame, (rect[0] - 50, int(rect[1] + median_del_y)), (rect[0] - 50, int(rect[3] + median_del_y)),
+						(0, 0, 255), 3)
+
 		cv2.putText(frame, "Sinked: {:.2f}ft".format(sinked),
 					(50, 50), cv2.FONT_HERSHEY_SIMPLEX,
 					1, (255, 0, 0), 2)
-		cv2.putText(frame, f"Prev Top Left: {prev_top_left}",
-					(50, 250), cv2.FONT_HERSHEY_SIMPLEX,
-					1, (255, 0, 0), 2)
-		cv2.putText(frame, f"Top Left: {top_left[1]}",
-					(50, 350), cv2.FONT_HERSHEY_SIMPLEX,
-					1, (255, 0, 0), 2)
+
 		# print(f"alreday sinked = {already_sinked}")
 		if sinked > prev_sinked:
 			worksheet.write(row, col, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), center)
