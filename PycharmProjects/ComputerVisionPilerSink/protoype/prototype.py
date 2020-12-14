@@ -4,11 +4,11 @@ import numpy as np
 import xlsxwriter
 from datetime import datetime
 import os
-import get_red_line_distance
+import image_deskewd_and_get_distance
 import math
 
 # input video or live feed
-cap = cv2.VideoCapture('pilevideo2.mp4')
+cap = cv2.VideoCapture(0)
 
 # for saving the output result
 fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
@@ -43,11 +43,11 @@ col = 0
 # Add a bold format to use to highlight cells.
 center = workbook.add_format({'align': 'center'})
 worksheet.write(row, col, 'Date-Time', header_format)
-worksheet.write(row, col + 1, 'Piller Sinked', header_format)
+worksheet.write(row, col + 1, 'Piller Grounded', header_format)
 row = row + 1
 
 red_line_dist = None
-prev_sinked = -999999
+prev_sinked = -math.inf
 template = None
 template_match_coord = []
 no_of_template = 2
@@ -124,17 +124,18 @@ while True:
 
 		if red_line_dist is None:
 			# get distance between red lines
-			full_rectangle = org_frame[0:frame_height, rect[0] - 10: rect[2] + 10]
-			# adjust brightness and contrast
-			adjust_rect = adjust_brightness_contrast(full_rectangle, 100, 50)
-			red_line_dist = get_red_line_distance.get_distance_between_red_lines(adjust_rect, 2)
+			selected_rectangle = org_frame[rect[1]:rect[3], rect[0]: rect[2]]
+			# de-skewed and find distance
+			final_angle, rotated_image, max_scored_histogram = image_deskewd_and_get_distance.skew_correction(selected_rectangle)
+			heatmap = image_deskewd_and_get_distance.draw_plots(selected_rectangle, rotated_image, final_angle,max_scored_histogram)
+			red_line_dist = image_deskewd_and_get_distance.get_distance(max_scored_histogram, heatmap)
 
-			# try one more time with adjusted image
-			if math.isnan(red_line_dist) or red_line_dist is None:
-				red_line_dist = get_red_line_distance.get_distance_between_red_lines(full_rectangle, 1)
-				if math.isnan(red_line_dist) or red_line_dist is None:
-					# restart the program
-					os.execl(sys.executable, sys.executable, *sys.argv)
+			if math.isnan(red_line_dist):
+				cv2.destroyAllWindows()
+				cap.release()
+				workbook.close()
+				out.release()
+				os.execl(sys.executable, sys.executable, *sys.argv)
 
 		template_h = abs(rect[1] - rect[3]) / no_of_template
 		# print(f"Template h = {template_h}")
@@ -222,6 +223,10 @@ while True:
 	out.write(frame)
 
 	if cv2.waitKey(30) == ord('r'):
+		cv2.destroyAllWindows()
+		cap.release()
+		workbook.close()
+		out.release()
 		os.execl(sys.executable, sys.executable, *sys.argv)
 	# if 'ESC' is pressed, quit the program
 	k = cv2.waitKey(30) & 0xff

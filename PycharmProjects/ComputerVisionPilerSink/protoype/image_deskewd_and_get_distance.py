@@ -40,23 +40,26 @@ def skew_correction(image, delta=1, limit=10):
 
 
 def zero_runs(a):
+	normalized_a = a / np.max(a)
+	thresh_a = np.where(normalized_a >= 0.5, 1, 0)
 	# Create an array that is 1 where a is 0, and pad each end with an extra 0.
-	iszero = np.concatenate(([0], np.equal(a, 0).view(np.int8), [0]))
+	iszero = np.concatenate(([0], np.equal(thresh_a, 0).view(np.int8), [0]))
 	absdiff = np.abs(np.diff(iszero))
 	# Runs start and end where absdiff is 1.
 	ranges = np.where(absdiff == 1)[0].reshape(-1, 2)
-
 	return ranges
 
 
-def get_distance(histogram):
+def get_distance(histogram, heatmap_to_draw):
 	ranges = zero_runs(histogram)
 	differences = np.diff(ranges)
 	remove_noisy_diff = [y1 for y1 in differences if (15 <= y1 <= 25)]
-	return np.mean(remove_noisy_diff)
-
-
-
+	red_line_dist = np.mean(remove_noisy_diff)
+	if not math.isnan(red_line_dist) and red_line_dist > 0:
+		row_3.text(-10, -10, "Heatmap, 1ft = {:.2f}px".format(red_line_dist), bbox={'facecolor': 'white', 'pad': 10})
+		row_3.imshow(cv2.cvtColor(heatmap_to_draw, cv2.COLOR_BGR2RGB))
+	plt.show()
+	return red_line_dist
 
 
 def draw_plots(org_img, rotated_img, angle, histogram):
@@ -66,15 +69,16 @@ def draw_plots(org_img, rotated_img, angle, histogram):
 	resized_heatmap = cv2.resize(edge_heatmap, (org_img.shape[1], org_img.shape[0]), interpolation=cv2.INTER_CUBIC)
 	cv2.imwrite(f"best_heatmap.png", resized_heatmap)
 
-	row_1.text(-20, -15, 'Original Image', bbox={'facecolor': 'white', 'pad': 10})
+	row_1.text(-10, -10, 'Original Image', bbox={'facecolor': 'white', 'pad': 10})
 	row_1.imshow(cv2.cvtColor(org_img, cv2.COLOR_BGR2RGB))
 
-	row_2.text(-20, -15, f'De-skewed by {angle}°', bbox={'facecolor': 'white', 'pad': 10})
+	row_2.text(-10, -10, f'De-skewed by {angle}°', bbox={'facecolor': 'white', 'pad': 10})
 	row_2.imshow(cv2.cvtColor(rotated_img, cv2.COLOR_BGR2RGB))
 
 	return resized_heatmap
 
 
+# for testing purpose
 if __name__ == '__main__':
 	image = cv2.imread('t3.png')
 	final_angle, rotated_image, max_scored_histogram = skew_correction(image)
