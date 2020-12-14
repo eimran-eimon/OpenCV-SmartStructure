@@ -7,14 +7,18 @@ import os
 import image_deskewd_and_get_distance
 import math
 
+
 # input video or live feed
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture('pilevideo.mp4')
+
+# mode for calc the 1ft px movement
+auto_mode = None
 
 # for saving the output result
-fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
-frame_width = int(cap.get(3))
-frame_height = int(cap.get(4))
-out = cv2.VideoWriter('output.mp4', fourcc, 20, (frame_width, frame_height), True)
+# fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
+# frame_width = int(cap.get(3))
+# frame_height = int(cap.get(4))
+# out = cv2.VideoWriter('output.mp4', fourcc, 20, (frame_width, frame_height), True)
 
 # config data for the program
 median_del_y = 0
@@ -22,6 +26,8 @@ frame_no = 0
 
 # for selecting the ROI
 rect = (0, 0, 0, 0)
+line_1 = (0, 0)
+line_2 = (0, 0)
 startPoint = False
 endPoint = False
 drawing = False
@@ -55,9 +61,21 @@ already_sinked = 0
 sinked = 0
 prev_top_left = -math.inf
 
+# count no of click for manual distance calc
+n = 0
+# declare a list to append all the
+# points on the image we clicked
+prev_drawn_line_y = []
+points = []
+complete_input = None
+
 
 def on_mouse(event, x, y, flags, params):
+	if auto_mode is None:
+		return
+
 	global rect, startPoint, endPoint, drawing
+
 	# get mouse click
 	if event == cv2.EVENT_LBUTTONDOWN:
 		if not startPoint:
@@ -70,7 +88,7 @@ def on_mouse(event, x, y, flags, params):
 			rect = (rect[0], rect[1], x, y)
 
 	elif event == cv2.EVENT_LBUTTONUP:
-		if not endPoint:
+		if startPoint and not endPoint:
 			rect = (rect[0], rect[1], x, y)
 			endPoint = True
 			drawing = False
@@ -102,43 +120,56 @@ def img_estimate(img, threshold):
 	return 'light' if is_light else 'dark'
 
 
+def release_resources():
+	cv2.destroyAllWindows()
+	cap.release()
+	workbook.close()
+
+
 while True:
 
 	ret, frame = cap.read()
 	org_frame = np.array(frame).copy()
 	frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-	if img_estimate(frame, 200) == 'light':
-		frame = adjust_brightness_contrast(frame, 0, 50)
-	elif img_estimate(frame, 100) == 'dark':
-		frame = adjust_brightness_contrast(frame, 50, 0)
+	# if img_estimate(frame, 200) == 'light':
+	# 	frame = adjust_brightness_contrast(frame, 0, 50)
+	# elif img_estimate(frame, 100) == 'dark':
+	# 	frame = adjust_brightness_contrast(frame, 50, 0)
 
 	cv2.namedWindow('frame')
 	cv2.setMouseCallback('frame', on_mouse)
 
 	# drawing rectangle on mouse move
 	if startPoint is True:
-		cv2.rectangle(frame, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0), 2)
+		cv2.rectangle(frame, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0), 1)
 
 	if startPoint is True and endPoint is True:
-
 		if red_line_dist is None:
-			# get distance between red lines
 			selected_rectangle = org_frame[rect[1]:rect[3], rect[0]: rect[2]]
+			# get distance between red lines
 			# de-skewed and find distance
-			final_angle, rotated_image, max_scored_histogram = image_deskewd_and_get_distance.skew_correction(selected_rectangle)
-			heatmap = image_deskewd_and_get_distance.draw_plots(selected_rectangle, rotated_image, final_angle,max_scored_histogram)
-			red_line_dist = image_deskewd_and_get_distance.get_distance(max_scored_histogram, heatmap)
+			if auto_mode is True:
+				final_angle, rotated_image, max_scored_histogram = image_deskewd_and_get_distance.skew_correction(
+					selected_rectangle)
+				heatmap = image_deskewd_and_get_distance.draw_plots(selected_rectangle, rotated_image, final_angle,
+																	max_scored_histogram)
+				red_line_dist = image_deskewd_and_get_distance.get_distance(max_scored_histogram, heatmap)
 
-			if math.isnan(red_line_dist):
-				cv2.destroyAllWindows()
-				cap.release()
-				workbook.close()
-				out.release()
-				os.execl(sys.executable, sys.executable, *sys.argv)
+				if math.isnan(red_line_dist):
+					release_resources()
+					# out.release()
+					os.execl(sys.executable, sys.executable, *sys.argv)
 
-		template_h = abs(rect[1] - rect[3]) / no_of_template
-		# print(f"Template h = {template_h}")
+			elif auto_mode is False:
+				red_line_dist = np.abs(rect[1] - rect[3])
+				auto_mode = True
+				startPoint = False
+				endPoint = False
+				continue
+
+		template_h = np.abs(rect[1] - rect[3]) / no_of_template
+		print(f"red dist = {red_line_dist}")
 		if template is None or (median_del_y + 5 > math.floor(template_h / 2)):
 			already_sinked = sinked
 			prev_top_left = 0
@@ -178,27 +209,23 @@ while True:
 			median_del_y = np.median(template_match_coord)
 			template_match_coord.clear()
 
-		# print(f"Current Y_coord= {current_y}")
-		# print(f"Prev Y_coord= {prev_current_y}")
 		w, h = template.shape[::-1]
-		print(f"DEL Y= {median_del_y}")
+		# print(f"DEL Y= {median_del_y}")
 		# draw the rectangle box
 		bottom_right = (top_left[0] + w, current_y + h)
-		# print(f"bottom right = {bottom_right[1] + 5}, and end = {rect[3]}")
 		cv2.rectangle(frame[rect[1]:rect[3], rect[0]:rect[2]], (top_left[0], current_y), bottom_right, (255, 0, 0), 2)
 
 		sinked = already_sinked + (median_del_y / red_line_dist)
 
 		# draw an arrow
-		cv2.line(frame, (rect[0] - 50, rect[1]), (rect[0] - 50, int(rect[1] + median_del_y)), (0, 255, 255), 4)
-		cv2.arrowedLine(frame, (rect[0] - 50, int(rect[1] + median_del_y)), (rect[0] - 50, int(rect[3] + median_del_y)),
-						(0, 0, 255), 3)
+		# cv2.line(frame, (rect[0] - 50, rect[1]), (rect[0] - 50, int(rect[1] + median_del_y)), (0, 255, 255), 4)
+		# cv2.arrowedLine(frame, (rect[0] - 50, int(rect[1] + median_del_y)), (rect[0] - 50, int(rect[3] + median_del_y)),
+		# 				(0, 0, 255), 3)
 
 		cv2.putText(frame, "Sinked: {:.2f}ft".format(sinked),
-					(50, 50), cv2.FONT_HERSHEY_SIMPLEX,
-					1, (255, 0, 0), 2)
+					(50, 30), cv2.FONT_HERSHEY_SIMPLEX,
+					1, (0, 0, 255), 2)
 
-		# print(f"alreday sinked = {already_sinked}")
 		if sinked > prev_sinked:
 			worksheet.write(row, col, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), center)
 			worksheet.write(row, col + 1, sinked, center)
@@ -208,32 +235,51 @@ while True:
 		# count the frame no
 		frame_no = frame_no + 1
 
-	if startPoint is False and endPoint is False:
-		cv2.putText(frame, "Please draw a rectangle",
-					(50, 60), cv2.FONT_HERSHEY_SIMPLEX,
-					1, (255, 0, 0), 2)
+	instruction_text = ""
+	if auto_mode is True and endPoint is False:
+		instruction_text = "Please, select the Region Of Interest"
+	elif auto_mode is False and red_line_dist is None:
+		instruction_text = "Please select 1ft area on the Piller"
+
+	cv2.putText(frame, f"{instruction_text}",
+				(50, 40), cv2.FONT_HERSHEY_SIMPLEX,
+				0.8, (0, 0, 255), 2)
+
 	cv2.putText(frame, "Press r - Restart the program",
-				(50, 100), cv2.FONT_HERSHEY_SIMPLEX,
-				0.8, (255, 200, 0), 2)
+				(50, 60), cv2.FONT_HERSHEY_SIMPLEX,
+				0.7, (250, 0, 20), 2)
 	cv2.putText(frame, "Press ESC - Quit the program",
-				(50, 140), cv2.FONT_HERSHEY_SIMPLEX,
-				0.8, (255, 200, 0), 2)
+				(50, 80), cv2.FONT_HERSHEY_SIMPLEX,
+				0.7, (250, 0, 20), 2)
+
+	if auto_mode is None:
+		cv2.putText(frame, "Press A - Automated calculation",
+					(50, 110), cv2.FONT_HERSHEY_SIMPLEX,
+					0.7, (0, 0, 255), 2)
+		cv2.putText(frame, "Press M - Manual calculation",
+					(50, 130), cv2.FONT_HERSHEY_SIMPLEX,
+					0.7, (0, 0, 255), 2)
 
 	cv2.imshow('frame', frame)
-	out.write(frame)
+	# out.write(frame)
 
-	if cv2.waitKey(30) == ord('r'):
-		cv2.destroyAllWindows()
-		cap.release()
-		workbook.close()
-		out.release()
+	if cv2.waitKey(32) == ord('a'):
+		if auto_mode is None:
+			auto_mode = True
+	if cv2.waitKey(32) == ord('m'):
+		if auto_mode is None:
+			auto_mode = False
+
+	if cv2.waitKey(32) == ord('r'):
+		release_resources()
+		# out.release()
 		os.execl(sys.executable, sys.executable, *sys.argv)
 	# if 'ESC' is pressed, quit the program
-	k = cv2.waitKey(30) & 0xff
+	k = cv2.waitKey(32) & 0xff
 	if k == 27:
 		# release resources
 		cv2.destroyAllWindows()
 		cap.release()
 		workbook.close()
-		out.release()
+		# out.release()
 		break
