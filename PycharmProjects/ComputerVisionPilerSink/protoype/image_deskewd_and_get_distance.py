@@ -57,14 +57,15 @@ def get_distance(histogram, heatmap_to_draw):
 	red_line_dist = np.mean(remove_noisy_diff)
 	if not math.isnan(red_line_dist) and red_line_dist > 0:
 		row_3.text(-10, -10, "Heatmap, 1ft = {:.2f}px".format(red_line_dist), bbox={'facecolor': 'white', 'pad': 10})
-		row_3.imshow(cv2.cvtColor(heatmap_to_draw, cv2.COLOR_BGR2RGB))
-	plt.show()
+		if heatmap_to_draw is not None:
+			row_3.imshow(cv2.cvtColor(heatmap_to_draw, cv2.COLOR_BGR2RGB))
+			plt.show()
 	return red_line_dist
 
 
 def draw_plots(org_img, rotated_img, angle, histogram):
 	edge_heatmap = None
-	edge_heatmap = cv2.normalize(histogram, edge_heatmap, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+	edge_heatmap = cv2.normalize(histogram, edge_heatmap, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
 	edge_heatmap = cv2.applyColorMap(edge_heatmap, cv2.COLORMAP_JET)
 	resized_heatmap = cv2.resize(edge_heatmap, (org_img.shape[1], org_img.shape[0]), interpolation=cv2.INTER_CUBIC)
 	cv2.imwrite(f"best_heatmap.png", resized_heatmap)
