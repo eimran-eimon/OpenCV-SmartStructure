@@ -68,6 +68,9 @@ prev_drawn_line_y = []
 points = []
 complete_input = None
 
+# make this False, if the error is still persisted
+draw_plots = True
+
 
 def on_mouse(event, x, y, flags, params):
 	if auto_mode is None:
@@ -157,8 +160,12 @@ while True:
 			if auto_mode is True:
 				final_angle, rotated_image, max_scored_histogram = image_deskewd_and_get_distance.skew_correction(
 					selected_rectangle)
-				heatmap = image_deskewd_and_get_distance.draw_plots(selected_rectangle, rotated_image, final_angle,
-																	max_scored_histogram)
+				if draw_plots:
+					heatmap = image_deskewd_and_get_distance.draw_plots(selected_rectangle, rotated_image, final_angle,
+																		max_scored_histogram)
+				else:
+					heatmap = None
+
 				red_line_dist = image_deskewd_and_get_distance.get_distance(max_scored_histogram, heatmap)
 
 				if math.isnan(red_line_dist):
