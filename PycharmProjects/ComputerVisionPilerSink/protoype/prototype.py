@@ -7,7 +7,6 @@ import os
 import image_deskewd_and_get_distance
 import math
 
-
 # input video or live feed
 cap = cv2.VideoCapture('pilevideo.mp4')
 
@@ -34,7 +33,7 @@ drawing = False
 
 # excel config
 # Create a workbook and add a worksheet.
-workbook = xlsxwriter.Workbook('data.xlsx')
+workbook = xlsxwriter.Workbook(f"data({datetime.now().strftime('%Y-%m-%d %H:%M:%S')}).xlsx")
 worksheet = workbook.add_worksheet()
 worksheet.set_column(0, 4, 30)
 header_format = workbook.add_format({
@@ -128,9 +127,15 @@ def release_resources():
 
 while True:
 
-	ret, frame = cap.read()
+	if auto_mode is None:
+		frame = np.zeros((500, 500))
+	else:
+		ret, frame = cap.read()
+		frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+		if ret is False:
+			continue
+
 	org_frame = np.array(frame).copy()
-	frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 	# if img_estimate(frame, 200) == 'light':
 	# 	frame = adjust_brightness_contrast(frame, 0, 50)
@@ -236,38 +241,42 @@ while True:
 		frame_no = frame_no + 1
 
 	instruction_text = ""
+	instruction_color = (0, 0, 0)
 	if auto_mode is True and endPoint is False:
-		instruction_text = "Please, select the Region Of Interest"
+		instruction_text = "Please select the Region Of Interest"
+		instruction_color = (0, 0, 255)
 	elif auto_mode is False and red_line_dist is None:
 		instruction_text = "Please select 1ft area on the Piller"
-
+		instruction_color = (0, 255, 0)
 	cv2.putText(frame, f"{instruction_text}",
-				(50, 40), cv2.FONT_HERSHEY_SIMPLEX,
-				0.8, (0, 0, 255), 2)
+				(50, 30), cv2.FONT_HERSHEY_SIMPLEX,
+				0.8, instruction_color, 2)
 
-	cv2.putText(frame, "Press r - Restart the program",
-				(50, 60), cv2.FONT_HERSHEY_SIMPLEX,
-				0.7, (250, 0, 20), 2)
-	cv2.putText(frame, "Press ESC - Quit the program",
+	cv2.putText(frame, "*Press and Hold respective keys for 5s",
 				(50, 80), cv2.FONT_HERSHEY_SIMPLEX,
+				0.5, (250, 0, 20), 1)
+
+	cv2.putText(frame, "Key r - Restart the program",
+				(50, 130), cv2.FONT_HERSHEY_SIMPLEX,
+				0.7, (250, 0, 20), 2)
+	cv2.putText(frame, "Key ESC - Quit the program",
+				(50, 180), cv2.FONT_HERSHEY_SIMPLEX,
 				0.7, (250, 0, 20), 2)
 
 	if auto_mode is None:
-		cv2.putText(frame, "Press A - Automated calculation",
-					(50, 110), cv2.FONT_HERSHEY_SIMPLEX,
-					0.7, (0, 0, 255), 2)
-		cv2.putText(frame, "Press M - Manual calculation",
-					(50, 130), cv2.FONT_HERSHEY_SIMPLEX,
-					0.7, (0, 0, 255), 2)
+		cv2.putText(frame, "Key A - Automated calculation",
+					(50, 230), cv2.FONT_HERSHEY_SIMPLEX,
+					0.7, (250, 0, 20), 2)
+		cv2.putText(frame, "Key M - Manual calculation",
+					(50, 280), cv2.FONT_HERSHEY_SIMPLEX,
+					0.7, (250, 0, 20), 2)
 
 	cv2.imshow('frame', frame)
 	# out.write(frame)
-
-	if cv2.waitKey(32) == ord('a'):
-		if auto_mode is None:
+	if auto_mode is None:
+		if cv2.waitKey(32) == ord('a'):
 			auto_mode = True
-	if cv2.waitKey(32) == ord('m'):
-		if auto_mode is None:
+		if cv2.waitKey(32) == ord('m'):
 			auto_mode = False
 
 	if cv2.waitKey(32) == ord('r'):
