@@ -130,7 +130,7 @@ def release_resources():
 
 while True:
 
-	k = cv2.waitKey(1) & 0xff
+	k = cv2.waitKey(32)
 
 	if auto_mode is None:
 		frame = np.zeros((500, 500))
@@ -284,12 +284,12 @@ while True:
 	# out.write(frame)
 
 	if auto_mode is None:
-		if cv2.waitKey(32) == ord('a'):
+		if k == ord('a'):
 			auto_mode = True
 		if cv2.waitKey(32) == ord('m'):
 			auto_mode = False
 
-	if cv2.waitKey(32) == ord('r'):
+	if k == ord('r'):
 		release_resources()
 		# out.release()
 		os.execl(sys.executable, sys.executable, *sys.argv)
