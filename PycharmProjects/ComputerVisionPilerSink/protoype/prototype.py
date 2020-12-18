@@ -130,6 +130,8 @@ def release_resources():
 
 while True:
 
+	k = cv2.waitKey(1) & 0xff
+
 	if auto_mode is None:
 		frame = np.zeros((500, 500))
 	else:
@@ -280,6 +282,7 @@ while True:
 
 	cv2.imshow('frame', frame)
 	# out.write(frame)
+
 	if auto_mode is None:
 		if cv2.waitKey(32) == ord('a'):
 			auto_mode = True
@@ -291,7 +294,6 @@ while True:
 		# out.release()
 		os.execl(sys.executable, sys.executable, *sys.argv)
 	# if 'ESC' is pressed, quit the program
-	k = cv2.waitKey(32) & 0xff
 	if k == 27:
 		# release resources
 		cv2.destroyAllWindows()
