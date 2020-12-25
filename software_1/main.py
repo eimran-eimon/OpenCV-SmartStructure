@@ -112,6 +112,14 @@ with open(filename, 'w') as csv_file:
 
 		# draw rectangle on mouse move
 		if startPoint is True:
+			try:
+				# try to zoom, if possible
+				image_to_show = np.copy(frame)
+				cropped = image_to_show[rect[1]:rect[3], rect[0]:rect[2]]
+				cv2.imshow('zoom', cv2.resize(cropped, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC))
+			except Exception as e:
+				print(str(e))
+
 			cv2.rectangle(frame, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0), 1)
 
 		if startPoint is True and endPoint is True:
