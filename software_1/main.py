@@ -11,12 +11,9 @@ cap = cv2.VideoCapture('pilevideo2.mp4')
 
 # config data for the program
 median_del_y = 0
-frame_no = 0
 
 # ROI selection data
 rect = (0, 0, 0, 0)
-line_1 = (0, 0)
-line_2 = (0, 0)
 startPoint = False
 endPoint = False
 drawing = False
