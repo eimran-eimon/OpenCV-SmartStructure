@@ -94,7 +94,7 @@ Please install Python and OpenCV on your local machine.
    ```
    cd computer-vision-piller-sink/software_1/
    ```
-4. Install required Python packages (`requirements.txt`)
+4. Install the required Python packages (`requirements.txt`)
    ```
    pip3 install -r requirements.txt
    ```
@@ -116,7 +116,7 @@ Please install Python and OpenCV on your local machine.
 <br> 
    <img src="readme_resources/select_roi.gif" alt="Logo"> 
 
-[Descriptions](https://example.com) and [documentations](https://example.com) will be added later. 
+[Description](https://example.com) and [documentation](https://example.com) will be added later. 
 
 
 
