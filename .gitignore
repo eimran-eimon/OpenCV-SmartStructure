@@ -2,5 +2,4 @@
 *.mp4
 *.xlsx
 *.csv
-*.png
 __pycache__/
