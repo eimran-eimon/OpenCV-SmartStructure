@@ -6,9 +6,14 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
-![made-with-python]
-![contributors-shield]
-![gitHub-release]
+<p align="center">
+ <a href="https://img.shields.io/badge/Contributor-Eimran_Eimon-<COLOR>.svg" alt="Contributors">
+        <img src="https://img.shields.io/badge/Contributor-Eimran_Eimon-<COLOR>.svg" /></a>
+    <a href="http://ForTheBadge.com/images/badges/made-with-python.svg" alt="Backers on Open Collective">
+        <img src="http://ForTheBadge.com/images/badges/made-with-python.svg" /></a>
+    <a href="https://img.shields.io/badge/Release-Software_I-blue.svg" alt="Sponsors on Open Collective">
+        <img src="https://img.shields.io/badge/Release-Software_I-blue.svg" /></a>
+</p>
 
 
 
@@ -160,4 +165,3 @@ See the [open issues](https://github.com/eimran-eimon/computer-vision-piller-sin
 [contributors-shield]: https://img.shields.io/badge/Contributor-Eimran_Eimon-<COLOR>.svg
 [made-with-python]: http://ForTheBadge.com/images/badges/made-with-python.svg
 [gitHub-release]: https://img.shields.io/badge/Release-Software_I-blue.svg
-[product-screenshot]: images/screenshot.png
