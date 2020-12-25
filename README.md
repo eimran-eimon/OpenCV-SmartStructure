@@ -104,14 +104,14 @@ Please install Python and OpenCV on your local machine.
 <!-- USAGE EXAMPLES -->
 ## Usage
 1. Select 1ft area on the Piller.
-<hr> 
+<br> 
    <img src="readme_resources/set_1_ft.gif" alt="Logo"> 
-<hr>
+
 2. Select the Region Of Interest.
-<hr> 
+<br> 
    <img src="readme_resources/select_roi.gif" alt="Logo"> 
-<hr>
-Description and [Documentation]().
+
+[Descriptions](https://example.com) and [documentations](https://example.com) will be added later. 
 
 
 
