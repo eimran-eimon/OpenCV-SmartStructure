@@ -113,7 +113,7 @@ Please install Python and OpenCV on your local machine.
 <br> 
    <img src="readme_resources/set_1_ft.gif" alt="Logo"> 
 
-2. Select the Region Of Interest.
+2. Select the Region of Interest.
 <br> 
    <img src="readme_resources/select_roi.gif" alt="Logo"> 
 
@@ -155,6 +155,7 @@ See the [open issues](https://github.com/eimran-eimon/computer-vision-piller-sin
 
 <!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
+Acknowledgments will be added later.
 * [Some Acknowledgements]()
 
 
