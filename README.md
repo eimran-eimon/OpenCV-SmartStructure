@@ -71,7 +71,8 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-This project's primary purpose is to measure how much of a Piller is hammering down in real-time using the CCTV stream.
+
+The primary purpose of the project is to measure how much of a Piller is hammering down in real-time using the CCTV stream.
 
 
 <!-- GETTING STARTED -->
