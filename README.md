@@ -17,7 +17,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/eimran-eimon/computer-vision-piller-sink/">
-    <img src="readme_resources/logo.png" alt="Logo" width="80" height="80">
+    <img src="readme_resources/logo.png" alt="Logo">
   </a>
 
   <h3 align="center">Smart Structure</h3>
@@ -82,29 +82,36 @@ Please install Python and OpenCV on your local machine.
 ### Installation
 
 1. Clone the repository
-   ```sh
+   ```
    git clone https://github.com/eimran-eimon/computer-vision-piller-sink
    ```
 3. Change the project directory
-   ```sh
+   ```
    cd computer-vision-piller-sink/software_1/
    ```
 4. Install required Python packages (`requirements.txt`)
-   ```JS
+   ```
    pip3 install -r requirements.txt
    ```
    
 5. Run the program (`main.py`)
-   ```JS
-   python main.py
    ```
-
+   python3 main.py
+   ```
+** Please keep some sample videos in the `software_1` folder and change the `main.py` accordingly.
 
 
 <!-- USAGE EXAMPLES -->
 ## Usage
-
-Description and [Documentation](https://example.com).
+1. Select 1ft area on the Piller.
+<hr> 
+   <img src="readme_resources/set_1_ft.gif" alt="Logo"> 
+<hr>
+2. Select the Region Of Interest.
+<hr> 
+   <img src="readme_resources/select_roi.gif" alt="Logo"> 
+<hr>
+Description and [Documentation]().
 
 
 
@@ -134,9 +141,9 @@ See the [open issues](https://github.com/eimran-eimon/computer-vision-piller-sin
 <!-- CONTACT -->
 ## Contact
 
-Md. Eimran Hossain Eimon - mdeimranhossaineimon@gmail.com
+`Md. Eimran Hossain Eimon` - mdeimranhossaineimon@gmail.com
 
-Project Link: [https://github.com/eimran-eimon/computer-vision-piller-sink](https://github.com/eimran-eimon/computer-vision-piller-sink)
+`Project Link:` [https://github.com/eimran-eimon/computer-vision-piller-sink](https://github.com/eimran-eimon/computer-vision-piller-sink)
 
 
 
