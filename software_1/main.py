@@ -13,7 +13,7 @@ cap = cv2.VideoCapture('pilevideo2.mp4')
 median_del_y = 0
 frame_no = 0
 
-# for selecting the ROI
+# ROI selection data
 rect = (0, 0, 0, 0)
 line_1 = (0, 0)
 line_2 = (0, 0)
@@ -23,7 +23,7 @@ drawing = False
 
 # csv field names
 fields = ['Date-Time', 'Measurement (in ft)']
-# name of csv file  
+# name of the csv file
 filename = f"data_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.csv"
 
 # config variables
@@ -37,18 +37,15 @@ already_sinked = 0
 sinked = 0
 
 template_match_coord = []
-no_of_template = 2
 
-# declare a list to append all the
-# points on the image we clicked
-prev_drawn_line_y = []
-points = []
+# no of template
+no_of_template = 2
 
 
 def on_mouse(event, x, y, flags, params):
 	global rect, startPoint, endPoint, drawing
 
-	# get mouse click
+	# get mouse clicks
 	if event == cv2.EVENT_LBUTTONDOWN:
 		if not startPoint:
 			rect = (x, y, 0, 0)
@@ -66,6 +63,7 @@ def on_mouse(event, x, y, flags, params):
 			drawing = False
 
 
+# generate template's coordinates
 def generate_templates(template_no):
 	roi_h = abs(rect[1] - rect[3])
 	offset_y = roi_h / template_no
@@ -79,14 +77,15 @@ def generate_templates(template_no):
 	return templates_coord
 
 
+# release all the resources
 def release_resources():
 	cv2.destroyAllWindows()
 	cap.release()
 	csv_file.close()
 
 
+# instruction texts
 def put_instruction_texts():
-
 	cv2.putText(frame, f"{instruction_text}",
 				(50, 30), cv2.FONT_HERSHEY_SIMPLEX,
 				0.8, instruction_color, 2)
@@ -114,7 +113,7 @@ with open(filename, 'w') as csv_file:
 		cv2.namedWindow('frame')
 		cv2.setMouseCallback('frame', on_mouse)
 
-		# drawing rectangle on mouse move
+		# draw rectangle on mouse move
 		if startPoint is True:
 			cv2.rectangle(frame, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0), 1)
 
@@ -146,14 +145,13 @@ with open(filename, 'w') as csv_file:
 				# show the template
 				cv2.imshow('template', template)
 
-			# Perform match operations
+			# Perform the match operations
 			res = cv2.matchTemplate(frame_gray[rect[1]:rect[3], rect[0]:rect[2]], template, cv2.TM_SQDIFF_NORMED)
 
 			# find the template's location in the video
 			min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 			top_left = min_loc
 
-			# change the coord to next best match
 			current_y = top_left[1]
 
 			# find the next best match
@@ -162,17 +160,18 @@ with open(filename, 'w') as csv_file:
 				sorted_match_result_idx = np.argsort(match_result)
 				for idx in sorted_match_result_idx:
 					if idx >= prev_top_left:
+						# change the coord to next best match
 						current_y = idx
 						break
 
-			# save the previous left Y coordinate to calculate noise
 			if abs(current_y - prev_top_left) < 5:
 				template_match_coord.append(current_y)
+				# save the previous left Y coordinate to calculate noise in the data
 				prev_top_left = current_y
 
 			# track the median of the last 20 coordinate
 			# this "median_del_y" is the grounded measurement for the current template
-			# and also used in resetting the template
+			# "median_del_y" also used in resetting the template
 			# data updated interval = 20 frames
 			if len(template_match_coord) == 20:
 				median_del_y = np.median(template_match_coord)
@@ -185,12 +184,9 @@ with open(filename, 'w') as csv_file:
 			bottom_right = (top_left[0] + w, current_y + h)
 			cv2.rectangle(frame[rect[1]:rect[3], rect[0]:rect[2]], (top_left[0], current_y), bottom_right, (255, 0, 0), 2)
 
-			cv2.putText(frame, "Sinked: {:.2f}ft".format(sinked),
-						(50, 30), cv2.FONT_HERSHEY_SIMPLEX,
-						1, (0, 0, 255), 2)
+			cv2.putText(frame, "Sinked: {:.2f}ft".format(sinked), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
 			# watch for change in measurement
-			# if changed, write the data to the csv file
 			if sinked > prev_sinked:
 				# write to the csv file
 				csv_writer.writerows([[datetime.now().strftime('%Y-%m-%d %H:%M:%S'), round(sinked, 4)]])
