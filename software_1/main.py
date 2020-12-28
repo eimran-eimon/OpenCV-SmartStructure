@@ -7,7 +7,7 @@ import math
 import csv
 
 # input video or live feed
-cap = cv2.VideoCapture('pilevideo2.mp4')
+cap = cv2.VideoCapture('pilevideo3.mp4')
 
 # config data for the program
 median_del_y = 0
@@ -104,9 +104,13 @@ with open(filename, 'w') as csv_file:
 
 		ret, frame = cap.read()
 		frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+		# If any of the frame is corrupted, skip all the code
+		# and try to capture another frame
 		if ret is False:
 			continue
 
+		# mouse event's coordinates will be recorded from this window
 		cv2.namedWindow('frame')
 		cv2.setMouseCallback('frame', on_mouse)
 
@@ -116,7 +120,7 @@ with open(filename, 'w') as csv_file:
 				# try to zoom, if possible
 				image_to_show = np.copy(frame)
 				cropped = image_to_show[rect[1]:rect[3], rect[0]:rect[2]]
-				cv2.imshow('zoom', cv2.resize(cropped, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC))
+				cv2.imshow('zoomed ROI', cv2.resize(cropped, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC))
 			except Exception as e:
 				print(str(e))
 
@@ -133,16 +137,21 @@ with open(filename, 'w') as csv_file:
 			template_h = np.abs(rect[1] - rect[3]) / no_of_template
 			print(f"Calculated distance = {red_line_dist}")
 
-			if template is None or (median_del_y + 5 > math.floor(template_h / 2)):
+			if template is None or (median_del_y + 10 > math.floor(template_h / 2)):
+				# reset top left coordinates
 				prev_top_left = 0
+				# reset median_del_y for the current template
 				median_del_y = 0
-				noisy_coord_count = 0
+
+				# clear all the previous template's coordinates
 				template_match_coord.clear()
 
 				# save data of the previous template
 				already_sinked = sinked
+
 				# generate template
 				template_coord = generate_templates(no_of_template)
+
 				# select the upper template
 				upper_template = template_coord[0]
 				# extract the template for visualizing purpose
