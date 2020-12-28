@@ -1,4 +1,6 @@
 import sys
+import time
+
 import cv2
 import numpy as np
 from datetime import datetime
@@ -8,7 +10,8 @@ import csv
 
 # input video or live feed
 cap = cv2.VideoCapture('pilevideo3.mp4')
-
+fps = cap.get(cv2.CAP_PROP_FPS)
+print(fps)
 # config data for the program
 median_del_y = 0
 
@@ -18,10 +21,13 @@ startPoint = False
 endPoint = False
 drawing = False
 
+# debug field names
+debug_fields = ['Frame no', 'Del Y', 'Value', 'Median Del Y (20 frames)']
 # csv field names
-fields = ['Date-Time', 'Measurement (in ft)']
+data_fields = ['Date-Time', 'Measurement (in ft)']
 # name of the csv file
-filename = f"data_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.csv"
+data_filename = f"data_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.csv"
+debug_filename = f"debug_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.csv"
 
 # config variables
 template = None
@@ -36,7 +42,16 @@ sinked = 0
 template_match_coord = []
 
 # no of template
-no_of_template = 2
+no_of_template = 3
+
+max_pixel_movement = 5
+max_displacement_per_frame = 2
+
+start_time = time.time()
+fps_show_interval = 1  # displays the frame rate every 1 second
+counter = 0
+fps = 0
+frame_no = 1
 
 
 def on_mouse(event, x, y, flags, params):
@@ -95,20 +110,23 @@ def put_instruction_texts():
 
 
 # writing to csv file
-with open(filename, 'w') as csv_file:
+with open(data_filename, 'w') as csv_file, open(debug_filename, 'w') as debug_file:
 	# creating a csv writer object
 	csv_writer = csv.writer(csv_file)
-	csv_writer.writerow(fields)
+	csv_writer.writerow(data_fields)
+
+	# creating debug file
+	debug_file_writer = csv.writer(debug_file)
+	debug_file_writer.writerow(debug_fields)
 
 	while True:
-
 		ret, frame = cap.read()
-		frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
 		# If any of the frame is corrupted, skip all the code
 		# and try to capture another frame
 		if ret is False:
 			continue
+
+		frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 		# mouse event's coordinates will be recorded from this window
 		cv2.namedWindow('frame')
@@ -116,13 +134,13 @@ with open(filename, 'w') as csv_file:
 
 		# draw rectangle on mouse move
 		if startPoint is True:
-			try:
-				# try to zoom, if possible
-				image_to_show = np.copy(frame)
-				cropped = image_to_show[rect[1]:rect[3], rect[0]:rect[2]]
-				cv2.imshow('zoomed ROI', cv2.resize(cropped, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC))
-			except Exception as e:
-				print(str(e))
+			# try:
+			# 	# try to zoom, if possible
+			# 	image_to_show = np.copy(frame)
+			# 	cropped = image_to_show[rect[1]:rect[3], rect[0]:rect[2]]
+			# 	cv2.imshow('zoomed ROI', cv2.resize(cropped, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC))
+			# except Exception as e:
+			# 	print(str(e))
 
 			cv2.rectangle(frame, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0), 1)
 
@@ -167,21 +185,25 @@ with open(filename, 'w') as csv_file:
 			top_left = min_loc
 
 			current_y = top_left[1]
-
+			# print("min val", min_val)
+			# print(f"Y-> {current_y}, prev_y-> {prev_top_left}")
 			# find the next best match
-			if (prev_top_left > current_y) or (abs(current_y - prev_top_left) > 5):
+			if abs(current_y - prev_top_left) > max_displacement_per_frame:
 				match_result = np.array(res).flatten()
 				sorted_match_result_idx = np.argsort(match_result)
 				for idx in sorted_match_result_idx:
 					if idx >= prev_top_left:
 						# change the coord to next best match
 						current_y = idx
+						min_val = match_result[idx]
+						# print(f"changed Y-> {current_y}")
 						break
 
-			if abs(current_y - prev_top_left) < 5:
+			if abs(current_y - prev_top_left) < max_pixel_movement:
 				template_match_coord.append(current_y)
 				# save the previous left Y coordinate to calculate noise in the data
 				prev_top_left = current_y
+				debug_file_writer.writerows([[frame_no, current_y, min_val, median_del_y]])
 
 			# track the median of the last 20 coordinate
 			# this "median_del_y" is the grounded measurement for the current template
@@ -190,7 +212,6 @@ with open(filename, 'w') as csv_file:
 			if len(template_match_coord) == 20:
 				median_del_y = np.median(template_match_coord)
 				template_match_coord.clear()
-
 			sinked = already_sinked + (median_del_y / red_line_dist)
 
 			# draw template match in the ROI
@@ -220,9 +241,20 @@ with open(filename, 'w') as csv_file:
 		# put instruction texts on the screen
 		put_instruction_texts()
 
+		# calc FPS
+		counter += 1
+		if (time.time() - start_time) > fps_show_interval:
+			fps = counter / (time.time() - start_time)
+			counter = 0
+			start_time = time.time()
+
+		cv2.putText(frame, f"Frame No: {frame_no}, FPS: {round(fps)}",
+					(50, 80), cv2.FONT_HERSHEY_SIMPLEX,
+					0.8, (0, 0, 0), 2)
+
 		# show the resultant frame
 		cv2.imshow('frame', frame)
-
+		frame_no += 1
 		# get the key input value
 		k = cv2.waitKey(32) & 0xff
 
