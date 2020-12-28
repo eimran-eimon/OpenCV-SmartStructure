@@ -9,11 +9,14 @@ import math
 import csv
 
 # input video or live feed
-cap = cv2.VideoCapture('pilevideo3.mp4')
-fps = cap.get(cv2.CAP_PROP_FPS)
-print(fps)
+cap = cv2.VideoCapture('crop2.mp4')
+
 # config data for the program
-median_del_y = 0
+max_pixel_movement = 5
+max_displacement_per_frame = 2
+
+# no of template
+no_of_template = 3
 
 # ROI selection data
 rect = (0, 0, 0, 0)
@@ -23,13 +26,17 @@ drawing = False
 
 # debug field names
 debug_fields = ['Frame no', 'Del Y', 'Value', 'Median Del Y (20 frames)']
+# name of the csv file
+debug_filename = f"debug_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.csv"
+
 # csv field names
 data_fields = ['Date-Time', 'Measurement (in ft)']
 # name of the csv file
 data_filename = f"data_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.csv"
-debug_filename = f"debug_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.csv"
 
 # config variables
+median_del_y = 0
+
 template = None
 red_line_dist = None
 
@@ -41,12 +48,7 @@ sinked = 0
 
 template_match_coord = []
 
-# no of template
-no_of_template = 3
-
-max_pixel_movement = 5
-max_displacement_per_frame = 2
-
+# FPS
 start_time = time.time()
 fps_show_interval = 1  # displays the frame rate every 1 second
 counter = 0
@@ -54,6 +56,7 @@ fps = 0
 frame_no = 1
 
 
+# record on mouse events
 def on_mouse(event, x, y, flags, params):
 	global rect, startPoint, endPoint, drawing
 
@@ -124,8 +127,8 @@ with open(data_filename, 'w') as csv_file, open(debug_filename, 'w') as debug_fi
 		# If any of the frame is corrupted, skip all the code
 		# and try to capture another frame
 		if ret is False:
-			continue
-
+			print("Process completed successfully!")
+			break
 		frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 		# mouse event's coordinates will be recorded from this window
@@ -173,7 +176,8 @@ with open(data_filename, 'w') as csv_file, open(debug_filename, 'w') as debug_fi
 				# select the upper template
 				upper_template = template_coord[0]
 				# extract the template for visualizing purpose
-				template = frame_gray[upper_template[0][1]:upper_template[1][1], upper_template[0][0]:upper_template[1][0]]
+				template = frame_gray[upper_template[0][1]:upper_template[1][1],
+						   upper_template[0][0]:upper_template[1][0]]
 				# show the template
 				cv2.imshow('template', template)
 
@@ -217,7 +221,8 @@ with open(data_filename, 'w') as csv_file, open(debug_filename, 'w') as debug_fi
 			# draw template match in the ROI
 			w, h = template.shape[::-1]
 			bottom_right = (top_left[0] + w, current_y + h)
-			cv2.rectangle(frame[rect[1]:rect[3], rect[0]:rect[2]], (top_left[0], current_y), bottom_right, (255, 0, 0), 2)
+			cv2.rectangle(frame[rect[1]:rect[3], rect[0]:rect[2]], (top_left[0], current_y), bottom_right, (255, 0, 0),
+						  2)
 
 			cv2.putText(frame, "Sinked: {:.2f}ft".format(sinked), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
