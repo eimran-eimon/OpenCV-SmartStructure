@@ -9,7 +9,7 @@ import math
 import csv
 
 # input video or live feed
-cap = cv2.VideoCapture('crop2.mp4')
+cap = cv2.VideoCapture(0)
 
 # config data for the program
 max_pixel_movement = 5
@@ -25,15 +25,17 @@ endPoint = False
 drawing = False
 
 # debug field names
-debug_fields = ['Frame no', 'Del Y', 'Value', 'Median Del Y (20 frames)']
+# debug_fields = ['Frame no', 'Del Y', 'Value', 'Median Del Y (20 frames)']
 # name of the csv file
-debug_filename = f"debug_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.csv"
+# debug_filename = f"debug_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.csv"
 
 # csv field names
 data_fields = ['Date-Time', 'Measurement (in ft)']
+csv_directory = "stored_csv_files"
+if not os.path.exists(csv_directory):
+	os.makedirs(csv_directory)
 # name of the csv file
-data_filename = f"data_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.csv"
-
+data_filename = f"./{csv_directory}/data_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.csv"
 # config variables
 median_del_y = 0
 
@@ -97,6 +99,7 @@ def release_resources():
 	cv2.destroyAllWindows()
 	cap.release()
 	csv_file.close()
+	print("Process completed successfully! You will find all the data in the 'stored_csv_files' directory.")
 
 
 # instruction texts
@@ -113,22 +116,21 @@ def put_instruction_texts():
 
 
 # writing to csv file
-with open(data_filename, 'w') as csv_file, open(debug_filename, 'w') as debug_file:
+with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
 	# creating a csv writer object
 	csv_writer = csv.writer(csv_file)
 	csv_writer.writerow(data_fields)
 
 	# creating debug file
-	debug_file_writer = csv.writer(debug_file)
-	debug_file_writer.writerow(debug_fields)
+	# debug_file_writer = csv.writer(debug_file)
+	# debug_file_writer.writerow(debug_fields)
 
 	while True:
 		ret, frame = cap.read()
-		# If any of the frame is corrupted, skip all the code
-		# and try to capture another frame
+
 		if ret is False:
-			print("Process completed successfully!")
 			break
+
 		frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 		# mouse event's coordinates will be recorded from this window
@@ -156,7 +158,7 @@ with open(data_filename, 'w') as csv_file, open(debug_filename, 'w') as debug_fi
 				continue
 
 			template_h = np.abs(rect[1] - rect[3]) / no_of_template
-			print(f"Calculated distance = {red_line_dist}")
+			# print(f"Calculated distance = {red_line_dist}")
 
 			if template is None or (median_del_y + 10 > math.floor(template_h / 2)):
 				# reset top left coordinates
@@ -178,8 +180,8 @@ with open(data_filename, 'w') as csv_file, open(debug_filename, 'w') as debug_fi
 				# extract the template for visualizing purpose
 				template = frame_gray[upper_template[0][1]:upper_template[1][1],
 						   upper_template[0][0]:upper_template[1][0]]
-				# show the template
-				cv2.imshow('template', template)
+			# show the template
+			# cv2.imshow('template', template)
 
 			# Perform the match operations
 			res = cv2.matchTemplate(frame_gray[rect[1]:rect[3], rect[0]:rect[2]], template, cv2.TM_SQDIFF_NORMED)
@@ -207,7 +209,7 @@ with open(data_filename, 'w') as csv_file, open(debug_filename, 'w') as debug_fi
 				template_match_coord.append(current_y)
 				# save the previous left Y coordinate to calculate noise in the data
 				prev_top_left = current_y
-				debug_file_writer.writerows([[frame_no, current_y, min_val, median_del_y]])
+			# debug_file_writer.writerows([[frame_no, current_y, min_val, median_del_y]])
 
 			# track the median of the last 20 coordinate
 			# this "median_del_y" is the grounded measurement for the current template
@@ -221,8 +223,7 @@ with open(data_filename, 'w') as csv_file, open(debug_filename, 'w') as debug_fi
 			# draw template match in the ROI
 			w, h = template.shape[::-1]
 			bottom_right = (top_left[0] + w, current_y + h)
-			cv2.rectangle(frame[rect[1]:rect[3], rect[0]:rect[2]], (top_left[0], current_y), bottom_right, (255, 0, 0),
-						  2)
+			# cv2.rectangle(frame[rect[1]:rect[3], rect[0]:rect[2]], (top_left[0], current_y), bottom_right, (255, 0, 0), 2)
 
 			cv2.putText(frame, "Sinked: {:.2f}ft".format(sinked), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
@@ -261,7 +262,7 @@ with open(data_filename, 'w') as csv_file, open(debug_filename, 'w') as debug_fi
 		cv2.imshow('frame', frame)
 		frame_no += 1
 		# get the key input value
-		k = cv2.waitKey(32) & 0xff
+		k = cv2.waitKey(1) & 0xff
 
 		if k == ord('r'):
 			release_resources()
