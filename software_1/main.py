@@ -24,11 +24,6 @@ startPoint = False
 endPoint = False
 drawing = False
 
-# debug field names
-# debug_fields = ['Frame no', 'Del Y', 'Value', 'Median Del Y (20 frames)']
-# name of the csv file
-# debug_filename = f"debug_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.csv"
-
 # csv field names
 data_fields = ['Date-Time', 'Measurement (in ft)']
 csv_directory = "stored_csv_files"
@@ -99,7 +94,7 @@ def release_resources():
 	cv2.destroyAllWindows()
 	cap.release()
 	csv_file.close()
-	print("Process completed successfully! You will find all the data in the 'stored_csv_files' directory.")
+	print("Process completed successfully!  All the data files can be found in the 'stored_csv_files' directory.")
 
 
 # instruction texts
@@ -121,10 +116,6 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
 	csv_writer = csv.writer(csv_file)
 	csv_writer.writerow(data_fields)
 
-	# creating debug file
-	# debug_file_writer = csv.writer(debug_file)
-	# debug_file_writer.writerow(debug_fields)
-
 	while True:
 		ret, frame = cap.read()
 
@@ -139,14 +130,6 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
 
 		# draw rectangle on mouse move
 		if startPoint is True:
-			# try:
-			# 	# try to zoom, if possible
-			# 	image_to_show = np.copy(frame)
-			# 	cropped = image_to_show[rect[1]:rect[3], rect[0]:rect[2]]
-			# 	cv2.imshow('zoomed ROI', cv2.resize(cropped, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC))
-			# except Exception as e:
-			# 	print(str(e))
-
 			cv2.rectangle(frame, (rect[0], rect[1]), (rect[2], rect[3]), (0, 255, 0), 1)
 
 		if startPoint is True and endPoint is True:
@@ -178,8 +161,7 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
 				# select the upper template
 				upper_template = template_coord[0]
 				# extract the template for visualizing purpose
-				template = frame_gray[upper_template[0][1]:upper_template[1][1],
-						   upper_template[0][0]:upper_template[1][0]]
+				template = frame_gray[upper_template[0][1]:upper_template[1][1], upper_template[0][0]:upper_template[1][0]]
 			# show the template
 			# cv2.imshow('template', template)
 
@@ -191,8 +173,6 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
 			top_left = min_loc
 
 			current_y = top_left[1]
-			# print("min val", min_val)
-			# print(f"Y-> {current_y}, prev_y-> {prev_top_left}")
 			# find the next best match
 			if abs(current_y - prev_top_left) > max_displacement_per_frame:
 				match_result = np.array(res).flatten()
@@ -209,7 +189,6 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
 				template_match_coord.append(current_y)
 				# save the previous left Y coordinate to calculate noise in the data
 				prev_top_left = current_y
-			# debug_file_writer.writerows([[frame_no, current_y, min_val, median_del_y]])
 
 			# track the median of the last 20 coordinate
 			# this "median_del_y" is the grounded measurement for the current template
