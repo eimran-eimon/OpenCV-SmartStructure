@@ -1,6 +1,6 @@
 import sys
 import time
-
+import yaml
 import cv2
 import numpy as np
 from datetime import datetime
@@ -8,15 +8,25 @@ import os
 import math
 import csv
 
-# input video or live feed
-cap = cv2.VideoCapture(0)
+config = yaml.safe_load(open('../config.yaml'))
+
+if config['video_input'] == 1:
+	sample_video_dir = config['sample_video_directory']
+	if not os.path.exists(sample_video_dir):
+		print('Sample video directory not found!')
+	else:
+		video_name = os.listdir(sample_video_dir)
+		cap = cv2.VideoCapture(f'{sample_video_dir}/{video_name[0]}')
+else:
+	cap = cv2.VideoCapture(0)
+
 
 # config data for the program
 max_pixel_movement = 5
 max_displacement_per_frame = 2
 
 # no of template
-no_of_template = 3
+no_of_template = config['no_of_template']
 
 # ROI selection data
 rect = (0, 0, 0, 0)
@@ -26,11 +36,13 @@ drawing = False
 
 # csv field names
 data_fields = ['Date-Time', 'Measurement (in ft)']
-csv_directory = "stored_csv_files"
+csv_directory = config['csv_directory']
+
 if not os.path.exists(csv_directory):
 	os.makedirs(csv_directory)
 # name of the csv file
 data_filename = f"./{csv_directory}/data_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}.csv"
+
 # config variables
 median_del_y = 0
 
@@ -73,6 +85,7 @@ def on_mouse(event, x, y, flags, params):
 			rect = (rect[0], rect[1], x, y)
 			endPoint = True
 			drawing = False
+			cv2.imwrite('1ft-b.png', frame)
 
 
 # generate template's coordinates
