@@ -1,8 +1,8 @@
 video_input: 0 # input from the "sample_video_directory"
-sample_video_directory: "../sample_video"
+sample_video_directory: "./sample_video"
 
 browse_file_gui: 1 # browse using GUI
 
 no_of_template: 3
 
-csv_directory: "../stored_csv_files" # results will be stored here
+csv_directory: "./stored_csv_files" # results will be stored here

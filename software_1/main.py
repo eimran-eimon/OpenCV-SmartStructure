@@ -10,7 +10,7 @@ import csv
 import gui
 import PySimpleGUI as sg
 
-config = yaml.safe_load(open('../config.yaml'))
+config = yaml.safe_load(open('./config.yaml'))
 
 if config['video_input'] == 1:
 	sample_video_dir = config['sample_video_directory']
@@ -195,7 +195,6 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
 			# cv2.imshow('template', template)
 
 			# Perform the match operations
-			print(rect)
 			res = cv2.matchTemplate(frame_gray[rect[1]:rect[3], rect[0]:rect[2]], template, cv2.TM_SQDIFF_NORMED)
 
 			# find the template's location in the video
