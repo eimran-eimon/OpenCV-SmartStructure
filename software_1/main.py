@@ -7,19 +7,26 @@ from datetime import datetime
 import os
 import math
 import csv
+import gui
+import PySimpleGUI as sg
 
 config = yaml.safe_load(open('../config.yaml'))
 
 if config['video_input'] == 1:
 	sample_video_dir = config['sample_video_directory']
 	if not os.path.exists(sample_video_dir):
-		print('Sample video directory not found!')
+		sg.popup('Directory Not Found', f'Please, make a directory named: {sample_video_dir}, and keep your video file '
+											f' in that directory!')
 	else:
 		video_name = os.listdir(sample_video_dir)
 		cap = cv2.VideoCapture(f'{sample_video_dir}/{video_name[0]}')
+
+elif config['browse_file_gui'] == 1:
+	file_name = gui.browse_sample_video()
+	cap = cv2.VideoCapture(file_name)
+
 else:
 	cap = cv2.VideoCapture(0)
-
 
 # config data for the program
 max_pixel_movement = 5
@@ -85,7 +92,6 @@ def on_mouse(event, x, y, flags, params):
 			rect = (rect[0], rect[1], x, y)
 			endPoint = True
 			drawing = False
-			cv2.imwrite('1ft-b.png', frame)
 
 
 # generate template's coordinates
@@ -153,6 +159,15 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
 				endPoint = False
 				continue
 
+			if rect[1] > rect[3]:
+				rect_list = list(rect)
+				rect_list[1], rect_list[3] = rect_list[3], rect_list[1]
+				rect = tuple(rect_list)
+			if rect[0] > rect[2]:
+				rect_list = list(rect)
+				rect_list[0], rect_list[2] = rect_list[2], rect_list[0]
+				rect = tuple(rect_list)
+
 			template_h = np.abs(rect[1] - rect[3]) / no_of_template
 			# print(f"Calculated distance = {red_line_dist}")
 
@@ -174,11 +189,13 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
 				# select the upper template
 				upper_template = template_coord[0]
 				# extract the template for visualizing purpose
-				template = frame_gray[upper_template[0][1]:upper_template[1][1], upper_template[0][0]:upper_template[1][0]]
+				template = frame_gray[upper_template[0][1]:upper_template[1][1],
+						   upper_template[0][0]:upper_template[1][0]]
 			# show the template
 			# cv2.imshow('template', template)
 
 			# Perform the match operations
+			print(rect)
 			res = cv2.matchTemplate(frame_gray[rect[1]:rect[3], rect[0]:rect[2]], template, cv2.TM_SQDIFF_NORMED)
 
 			# find the template's location in the video
