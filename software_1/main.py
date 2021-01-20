@@ -9,15 +9,23 @@ import math
 import csv
 import gui
 from argparse import ArgumentParser
+import PySimpleGUI as sg
 
 parser = ArgumentParser()
 parser.add_argument("-i", "--input", dest="input", help="Video file path")
 
 args = parser.parse_args()
-input_path = vars(args)['input']
+input_file = vars(args)['input']
 
-if input_path is not None:
-	cap = cv2.VideoCapture(input_path)
+if input_file is not None:
+	if input_file == 'camera':
+		cap = cv2.VideoCapture(0)
+	else:
+		if os.path.isfile(input_file) and input_file.lower().endswith((".mp4", ".mkv")):
+			cap = cv2.VideoCapture(input_file)
+		else:
+			sg.popup("Please select a valid video file!")
+			exit(1)
 else:
 	config = yaml.safe_load(open('./config.yaml'))
 	if config['input'] == 'browse':
