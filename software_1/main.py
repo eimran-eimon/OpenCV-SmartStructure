@@ -8,32 +8,31 @@ import os
 import math
 import csv
 import gui
-import PySimpleGUI as sg
+from argparse import ArgumentParser
 
-config = yaml.safe_load(open('./config.yaml'))
+parser = ArgumentParser()
+parser.add_argument("-i", "--input", dest="input", help="Video file path")
 
-if config['video_input'] == 1:
-	sample_video_dir = config['sample_video_directory']
-	if not os.path.exists(sample_video_dir):
-		sg.popup('Directory Not Found', f'Please, make a directory named: {sample_video_dir}, and keep your video file '
-											f' in that directory!')
-	else:
-		video_name = os.listdir(sample_video_dir)
-		cap = cv2.VideoCapture(f'{sample_video_dir}/{video_name[0]}')
+args = parser.parse_args()
+input_path = vars(args)['input']
 
-elif config['browse_file_gui'] == 1:
-	file_name = gui.browse_sample_video()
-	cap = cv2.VideoCapture(file_name)
-
+if input_path is not None:
+	cap = cv2.VideoCapture(input_path)
 else:
-	cap = cv2.VideoCapture(0)
+	config = yaml.safe_load(open('./config.yaml'))
+	if config['input'] == 'browse':
+		file_name = gui.browse_sample_video()
+		cap = cv2.VideoCapture(file_name)
+	elif config['input'] == 'camera':
+		cap = cv2.VideoCapture(0)
+
 
 # config data for the program
 max_pixel_movement = 5
 max_displacement_per_frame = 2
 
 # no of template
-no_of_template = config['no_of_template']
+no_of_template = 3
 
 # ROI selection data
 rect = (0, 0, 0, 0)
@@ -43,7 +42,7 @@ drawing = False
 
 # csv field names
 data_fields = ['Date-Time', 'Measurement (in ft)']
-csv_directory = config['csv_directory']
+csv_directory = './stored_csv_files'
 
 if not os.path.exists(csv_directory):
 	os.makedirs(csv_directory)
@@ -270,7 +269,7 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
 		cv2.imshow('frame', frame)
 		frame_no += 1
 		# get the key input value
-		k = cv2.waitKey(1) & 0xff
+		k = cv2.waitKey(18) & 0xff
 
 		if k == ord('r'):
 			release_resources()
