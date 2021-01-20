@@ -120,6 +120,7 @@ def release_resources():
 	cv2.destroyAllWindows()
 	cap.release()
 	csv_file.close()
+	exit(0)
 	print("Process completed successfully!  All the data files can be found in the 'stored_csv_files' directory.")
 
 
