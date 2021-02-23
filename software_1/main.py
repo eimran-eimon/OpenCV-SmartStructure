@@ -13,13 +13,17 @@ import PySimpleGUI as sg
 
 parser = ArgumentParser()
 parser.add_argument("-i", "--input", dest="input", help="Video file path")
+parser.add_argument("-c_p", "--camera_port", dest="camera_port", help="Camera port, default 0 (WebCam)")
 
 args = parser.parse_args()
 input_file = vars(args)['input']
+camera_port = vars(args)['camera_port']
 
 if input_file is not None:
 	if input_file == 'camera':
-		cap = cv2.VideoCapture(0)
+		print(camera_port)
+		port = 0 if camera_port is None else camera_port
+		cap = cv2.VideoCapture(int(port))
 	else:
 		if os.path.isfile(input_file) and input_file.lower().endswith((".mp4", ".mkv")):
 			cap = cv2.VideoCapture(input_file)
@@ -32,7 +36,8 @@ else:
 		file_name = gui.browse_sample_video()
 		cap = cv2.VideoCapture(file_name)
 	elif config['input'] == 'camera':
-		cap = cv2.VideoCapture(0)
+		selected_camera_port = gui.show_list_of_cameras()
+		cap = cv2.VideoCapture(selected_camera_port)
 
 
 # config data for the program
@@ -120,7 +125,7 @@ def release_resources():
 	cv2.destroyAllWindows()
 	cap.release()
 	csv_file.close()
-	print("Process completed successfully!  All the data files can be found in the 'stored_csv_files' directory.")
+	print("Process completed successfully!  All the data files could be found in the 'stored_csv_files' directory.")
 
 
 # instruction texts
