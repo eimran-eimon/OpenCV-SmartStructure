@@ -45,7 +45,7 @@ def measure_displacement():
 	return total_displacement
 
 
-# Assuming two markers have the motion in Y-axis
+# Assuming two markers have the same motion in Y-axis
 def copy_displacement_of_the_other_marker(detected_marker_id):
 	if len(markerZeroCoordinates) < 2 or len(markerOneCoordinates) < 2:
 		return
@@ -121,8 +121,6 @@ while True:
 			cY = int((topLeft[1] + bottomRight[1]) / 2.0)
 			cv2.circle(frame, (cX, cY), 4, (0, 0, 255), -1)
 
-			save_marker_size(topLeft, topRight, bottomLeft, bottomRight)
-
 			if markerID == 0 and markerZero is False:
 				markerZero = True
 				markerZeroCoordinates.append(cY)  # save the initial position (Y) of the marker_zero
@@ -132,10 +130,11 @@ while True:
 
 			if markerZero and markerOne:
 				is_saved = save_displacement(markerID, cY)
-				if len(ids) == 1 and is_saved is True:
-					# if one marker is missing
-					copy_displacement_of_the_other_marker(markerID)
-
+				if is_saved is True:
+					save_marker_size(topLeft, topRight, bottomLeft, bottomRight)
+					if len(ids) == 1:
+						# if one marker is missing
+						copy_displacement_of_the_other_marker(markerID)
 				total_displacement_in_px = measure_displacement()
 
 			# draw the ArUco marker ID on the frame
@@ -147,8 +146,7 @@ while True:
 	default_instruction_texts()
 	if total_displacement_in_px > 0:
 		displacement = (arucoMarkerSizeInFt / np.mean(marker_size)) * total_displacement_in_px
-		cv2.putText(frame, "Sinked: {:.2f}ft".format(displacement), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0),
-					2)
+		cv2.putText(frame, "Sinked: {:.2f}ft".format(displacement), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 	if markerZero is False:
 		cv2.putText(frame, f"Marker: 0 is not found yet!", (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 	if markerOne is False:
