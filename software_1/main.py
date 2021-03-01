@@ -1,5 +1,6 @@
 # import the necessary packages
 from imutils.video import FileVideoStream
+from imutils.video import VideoStream
 import numpy as np
 import time
 import cv2
@@ -23,6 +24,7 @@ marker_size = []
 # initialize the video stream and allow the camera sensor to warm up
 print("[INFO] starting video stream...")
 vs = FileVideoStream("test_video1.mp4").start()
+# vs = VideoStream(0).start()
 time.sleep(2.0)
 
 
@@ -86,7 +88,8 @@ while True:
 	# and resize it to have a maximum width of 1000 pixels
 	frame = vs.read()
 	# frame = imutils.resize(frame, width=1000)
-	if not vs.running():
+
+	if frame is None:
 		break
 
 	# detect ArUco markers in the input frame
@@ -162,11 +165,6 @@ while True:
 
 	# if the `ESC` key was pressed, break from the loop
 	if key == 27:
-		print(np.mean(marker_size))
-		print('-------------------------------------')
-		print(markerZeroCoordinates)
-		print('-------------------------------------')
-		print(markerOneCoordinates)
 		break
 
 # do a bit of cleanup
