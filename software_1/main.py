@@ -1,12 +1,12 @@
 # import the necessary packages
-from imutils.video import VideoStream
+from imutils.video import FileVideoStream
 import numpy as np
 import time
 import cv2
 
 arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 arucoParams = cv2.aruco.DetectorParameters_create()
-arucoParams.cornerRefinementMethod = 1
+arucoParams.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
 arucoMarkerSizeInFt = 0.575  # 6.9 inch
 
 markerZero = False  # is marker zero detected
@@ -22,7 +22,7 @@ marker_size = []
 
 # initialize the video stream and allow the camera sensor to warm up
 print("[INFO] starting video stream...")
-vs = VideoStream(src=0).start()
+vs = FileVideoStream("test_video1.mp4").start()
 time.sleep(2.0)
 
 
@@ -41,7 +41,7 @@ def measure_displacement():
 		return 0
 	marker_zero_total_displacement = markerZeroCoordinates[-1] - markerZeroCoordinates[0]
 	marker_one_total_displacement = markerOneCoordinates[-1] - markerOneCoordinates[0]
-	total_displacement = np.mean(marker_zero_total_displacement + marker_one_total_displacement)
+	total_displacement = np.mean([marker_zero_total_displacement, marker_one_total_displacement])
 	return total_displacement
 
 
@@ -78,7 +78,7 @@ def save_marker_size(top_left, top_right, bottom_left, bottom_right):
 	marker_size.append(np.abs(top_left[0] - top_right[0]))
 	marker_size.append(np.abs(top_right[1] - bottom_right[1]))
 	marker_size.append(np.abs(bottom_right[0] - bottom_left[0]))
-	marker_size.append(np.abs(bottom_left[1] - bottom_left[1]))
+	marker_size.append(np.abs(bottom_left[1] - top_left[1]))
 
 
 while True:
@@ -86,6 +86,8 @@ while True:
 	# and resize it to have a maximum width of 1000 pixels
 	frame = vs.read()
 	# frame = imutils.resize(frame, width=1000)
+	if not vs.running():
+		break
 
 	# detect ArUco markers in the input frame
 	(corners, ids, rejected) = cv2.aruco.detectMarkers(frame, arucoDict, parameters=arucoParams)
@@ -144,9 +146,11 @@ while True:
 						0.5, (0, 255, 0), 2)
 
 	default_instruction_texts()
+	# print(total_displacement_in_px)
 	if total_displacement_in_px > 0:
 		displacement = (arucoMarkerSizeInFt / np.mean(marker_size)) * total_displacement_in_px
-		cv2.putText(frame, "Sinked: {:.2f}ft".format(displacement), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+		cv2.putText(frame, "Sinked: {:.2f}ft".format(displacement), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),
+					2)
 	if markerZero is False:
 		cv2.putText(frame, f"Marker: 0 is not found yet!", (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 	if markerOne is False:
@@ -156,7 +160,7 @@ while True:
 	cv2.imshow("Frame", frame)
 	key = cv2.waitKey(1) & 0xFF
 
-	# if the `q` key was pressed, break from the loop
+	# if the `ESC` key was pressed, break from the loop
 	if key == 27:
 		print(np.mean(marker_size))
 		print('-------------------------------------')
