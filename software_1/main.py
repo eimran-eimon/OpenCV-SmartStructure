@@ -23,7 +23,7 @@ marker_size = []
 
 # initialize the video stream and allow the camera sensor to warm up
 print("[INFO] starting video stream...")
-vs = FileVideoStream("test_video1.mp4").start()
+vs = FileVideoStream("test_video2_cut.mp4").start()
 # vs = VideoStream(0).start()
 time.sleep(2.0)
 
@@ -31,11 +31,11 @@ time.sleep(2.0)
 # instruction texts
 def default_instruction_texts():
 	cv2.putText(frame, "Key r - Restart the program",
-				(50, 130), cv2.FONT_HERSHEY_SIMPLEX,
-				0.7, (250, 0, 20), 2)
+	            (50, 130), cv2.FONT_HERSHEY_SIMPLEX,
+	            0.7, (250, 0, 20), 2)
 	cv2.putText(frame, "Key ESC - Quit the program",
-				(50, 180), cv2.FONT_HERSHEY_SIMPLEX,
-				0.7, (250, 0, 20), 2)
+	            (50, 180), cv2.FONT_HERSHEY_SIMPLEX,
+	            0.7, (250, 0, 20), 2)
 
 
 def measure_displacement():
@@ -88,18 +88,18 @@ while True:
 	# and resize it to have a maximum width of 1000 pixels
 	frame = vs.read()
 	# frame = imutils.resize(frame, width=1000)
-
+	
 	if frame is None:
 		break
-
+	
 	# detect ArUco markers in the input frame
 	(corners, ids, rejected) = cv2.aruco.detectMarkers(frame, arucoDict, parameters=arucoParams)
-
+	
 	# verify *at least* one ArUco marker was detected
 	if len(corners) > 0:
 		# flatten the ArUco IDs list
 		ids = ids.flatten()
-
+		
 		# loop over the detected ArUCo corners
 		for (markerCorner, markerID) in zip(corners, ids):
 			# extract the marker corners (which are always returned
@@ -107,32 +107,32 @@ while True:
 			# order)
 			corners = markerCorner.reshape((4, 2))
 			(topLeft, topRight, bottomRight, bottomLeft) = corners
-
+			
 			# convert each of the (x, y)-coordinate pairs to integers
 			topRight = (int(topRight[0]), int(topRight[1]))
 			bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
 			bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
 			topLeft = (int(topLeft[0]), int(topLeft[1]))
-
+			
 			# draw the bounding box of the ArUCo detection
 			cv2.line(frame, topLeft, topRight, (0, 255, 0), 2)
 			cv2.line(frame, topRight, bottomRight, (0, 255, 0), 2)
 			cv2.line(frame, bottomRight, bottomLeft, (0, 255, 0), 2)
 			cv2.line(frame, bottomLeft, topLeft, (0, 255, 0), 2)
-
+			
 			# compute and draw the center (x, y)-coordinates of the
 			# ArUco marker
 			cX = int((topLeft[0] + bottomRight[0]) / 2.0)
 			cY = int((topLeft[1] + bottomRight[1]) / 2.0)
 			cv2.circle(frame, (cX, cY), 4, (0, 0, 255), -1)
-
+			
 			if markerID == 0 and markerZero is False:
 				markerZero = True
 				markerZeroCoordinates.append(cY)  # save the initial position (Y) of the marker_zero
 			if markerID == 1 and markerOne is False:
 				markerOne = True
 				markerOneCoordinates.append(cY)  # save the initial position (Y) of the marker_one
-
+			
 			if markerZero and markerOne:
 				is_saved = save_displacement(markerID, cY)
 				if is_saved is True:
@@ -141,30 +141,33 @@ while True:
 						# if one marker is missing
 						copy_displacement_of_the_other_marker(markerID)
 				total_displacement_in_px = measure_displacement()
-
+			
 			# draw the ArUco marker ID on the frame
 			cv2.putText(frame, str(markerID),
-						(topLeft[0], topLeft[1] - 15),
-						cv2.FONT_HERSHEY_SIMPLEX,
-						0.5, (0, 255, 0), 2)
-
+			            (topLeft[0], topLeft[1] - 15),
+			            cv2.FONT_HERSHEY_SIMPLEX,
+			            0.5, (0, 255, 0), 2)
+	
 	default_instruction_texts()
 	# print(total_displacement_in_px)
 	if total_displacement_in_px > 0:
 		displacement = (arucoMarkerSizeInFt / np.mean(marker_size)) * total_displacement_in_px
 		cv2.putText(frame, "Sinked: {:.2f}ft".format(displacement), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),
-					2)
+		            2)
 	if markerZero is False:
 		cv2.putText(frame, f"Marker: 0 is not found yet!", (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 	if markerOne is False:
 		cv2.putText(frame, f"Marker: 1 is not found yet!", (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-
+	
 	# show the output frame
 	cv2.imshow("Frame", frame)
 	key = cv2.waitKey(1) & 0xFF
-
+	
 	# if the `ESC` key was pressed, break from the loop
 	if key == 27:
+		print(markerZeroCoordinates)
+		print("-------------------")
+		print(markerOneCoordinates)
 		break
 
 # do a bit of cleanup
