@@ -16,11 +16,11 @@ tracker = []
 # displacement in pixel
 total_displacement_in_px = 0
 # calculate and save marker size as long as program run to get more accurate data
-marker_size = 22
+marker_size = []
 marker_labels = []
 # initialize the video stream and allow the camera sensor to warm up
 print("[INFO] starting video stream...")
-vs = FileVideoStream("test_video2_cut.mp4").start()
+vs = FileVideoStream("test_video1.mp4").start()
 # vs = VideoStream(0).start()
 time.sleep(2.0)
 
@@ -84,7 +84,7 @@ while True:
 		t = dlib.correlation_tracker()
 		rect = dlib.rectangle(int(box[0]), int(box[1]), int(box[0]) + int(box[2]), int(box[1]) + int(box[3]))
 		# markerZeroCoordinates.append((int(box[1]) + (int(box[1]) + int(box[3]))) / 2)
-		# marker_size.append([np.abs(int(box[1]) - int(box[3]))])
+		marker_size.append(int(box[3]))
 		t.start_track(frame, rect)
 		tracker.append(t)
 		marker_labels.append(0)
@@ -95,7 +95,7 @@ while True:
 		t = dlib.correlation_tracker()
 		rect = dlib.rectangle(int(box[0]), int(box[1]), int(box[0]) + int(box[2]), int(box[1]) + int(box[3]))
 		# markerOneCoordinates.append((int(box[1]) + (int(box[1]) + int(box[3]))) / 2)
-		# marker_size.append(np.abs(int(box[1]) - int(box[3])))
+		marker_size.append(int(box[3]))
 		t.start_track(frame, rect)
 		tracker.append(t)
 		marker_labels.append(1)
@@ -112,9 +112,9 @@ while True:
 			startY = int(pos.top())
 			endX = int(pos.right())
 			endY = int(pos.bottom())
-			is_saved = save_displacement(l, startY + endY / 2)
+			is_saved = save_displacement(l, (startY + endY) / 2)
 			total_displacement_in_px = measure_displacement()
-			if is_saved:
+			if True:
 				# draw the bounding box from the correlation object tracker
 				cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 2)
 				cv2.putText(frame, str(l), (startX, startY - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
@@ -126,9 +126,10 @@ while True:
 	
 	default_instruction_texts()
 	
-	# print(f"Total displacement: {total_displacement_in_px}")
+	print(marker_size)
+	print(f"Total displacement: {total_displacement_in_px}")
 	if total_displacement_in_px > 0:
-		displacement = (arucoMarkerSizeInFt / marker_size) * total_displacement_in_px
+		displacement = (arucoMarkerSizeInFt / np.mean(marker_size)) * total_displacement_in_px
 		cv2.putText(frame, "Sinked: {:.2f}ft".format(displacement), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 		
 	# show the output frame

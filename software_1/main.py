@@ -23,7 +23,7 @@ marker_size = []
 
 # initialize the video stream and allow the camera sensor to warm up
 print("[INFO] starting video stream...")
-vs = FileVideoStream("test_video2_cut.mp4").start()
+vs = FileVideoStream("test_video1.mp4").start()
 # vs = VideoStream(0).start()
 time.sleep(2.0)
 
@@ -149,6 +149,7 @@ while True:
 			            0.5, (0, 255, 0), 2)
 	
 	default_instruction_texts()
+	print(np.mean(marker_size))
 	# print(total_displacement_in_px)
 	if total_displacement_in_px > 0:
 		displacement = (arucoMarkerSizeInFt / np.mean(marker_size)) * total_displacement_in_px
