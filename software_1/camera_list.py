@@ -1,4 +1,5 @@
 import cv2
+import platform
 
 
 def working_camera_list_ports():
@@ -7,7 +8,11 @@ def working_camera_list_ports():
 	working_ports = []
 	available_ports = []
 	while is_working:
-		camera = cv2.VideoCapture(dev_port)
+		if platform.system() == "Windows":
+			camera = cv2.VideoCapture(dev_port + cv2.CAP_DSHOW)
+		else:
+			camera = cv2.VideoCapture(dev_port)
+
 		if not camera.isOpened():
 			is_working = False
 		else:

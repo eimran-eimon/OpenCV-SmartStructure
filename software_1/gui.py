@@ -38,11 +38,10 @@ def browse_sample_video():
 
 
 def show_list_of_cameras():
-	working_camera_list = camera_list.working_camera_list_ports()
-	layout = [[sg.Button(f"Camera Number - {i}", key=i) for i in working_camera_list]]
+	# working_camera_list = camera_list.working_camera_list_ports()
+	layout = [[sg.Button(f"Web camera", key=0), sg.Button(f"External Camera", key=1)]]
 	window = sg.Window('Select a camera', layout)
 	event, values = window.read()
-	print(event, values)
 	window.close()
 	return event
 

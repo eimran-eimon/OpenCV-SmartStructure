@@ -2,7 +2,7 @@
 from imutils.video import FileVideoStream
 from imutils.video import VideoStream
 import numpy as np
-import time
+import platform
 import cv2
 import gui
 
@@ -29,7 +29,10 @@ def automated_mode_run():
 	if input_method == 0:
 		print("[INFO] starting video stream...")
 		selected_camera_port = gui.show_list_of_cameras()
-		vs = VideoStream(selected_camera_port).start()
+		if platform.system() == "Windows":
+			vs = VideoStream(selected_camera_port + + cv2.CAP_DSHOW).start()
+		else:
+			vs = VideoStream(selected_camera_port).start()
 	# time.sleep(2.0)
 	elif input_method == 1:
 		print("[INFO] starting file video stream...")
