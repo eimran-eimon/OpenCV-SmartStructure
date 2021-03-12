@@ -3,9 +3,9 @@ import numpy as np
 import cv2
 import manual_mode
 import auto_mode
-import platform
 
 while True:
+	
 	frame = np.zeros((500, 500, 3))
 	
 	cv2.putText(frame, "*Press the respective key",

@@ -9,7 +9,7 @@ import platform
 
 
 def manual_mode_run():
-	pts = []  # for storing points
+	
 	markerZero = False  # is marker zero detected
 	markerOne = False  # is marker one detected
 	arucoMarkerSizeInFt = 0.974409449  # 11.7 inch
@@ -32,49 +32,11 @@ def manual_mode_run():
 			vs = VideoStream(selected_camera_port + + cv2.CAP_DSHOW).start()
 		else:
 			vs = VideoStream(selected_camera_port).start()
-	# time.sleep(2.0)
+
 	elif input_method == 1:
 		print("[INFO] starting file video stream...")
 		file_name = gui.browse_sample_video()
 		vs = FileVideoStream(file_name).start()
-	
-	def draw_roi(event, x, y, flags, param):
-		img = frame.copy()
-		
-		if event == cv2.EVENT_LBUTTONDOWN:
-			pts.append((x, y))
-		
-		if event == cv2.EVENT_RBUTTONDOWN:  # Right click to cancel the last selected point
-			pts.pop()
-		
-		if event == cv2.EVENT_MBUTTONDOWN:
-			mask = np.zeros(img.shape, np.uint8)
-			points = np.array(pts, np.int32)
-			points = points.reshape((-1, 1, 2))
-	
-			mask = cv2.polylines(mask, [points], True, (255, 255, 255), 2)
-			mask2 = cv2.fillPoly(mask.copy(), [points], (255, 255, 255))  # for ROI
-			mask3 = cv2.fillPoly(mask.copy(), [points], (0, 255, 0))  # for displaying images on the desktop
-	
-			show_image = cv2.addWeighted(src1=img, alpha=0.8, src2=mask3, beta=0.2, gamma=0)
-			
-			cv2.imshow("mask", mask2)
-			cv2.imshow("show_img", show_image)
-	
-			ROI = cv2.bitwise_and(mask2, img)
-			cv2.imshow("ROI", ROI)
-			cv2.waitKey(0)
-		
-		if len(pts) > 0:
-			# Draw the last point in pts
-			cv2.circle(img, pts[-1], 3, (0, 0, 255), -1)
-		
-		if len(pts) > 1:
-			for i in range(len(pts) - 1):
-				cv2.circle(img, pts[i], 5, (0, 0, 255), -1)  # x ,y is the coordinates of the mouse click place
-			cv2.line(img=img, pt1=pts[i], pt2=pts[i + 1], color=(255, 0, 0), thickness=2)
-		
-		cv2.imshow('Frame', img)
 		
 	# instruction texts
 	def default_instruction_texts():
@@ -113,15 +75,11 @@ def manual_mode_run():
 		
 		key = cv2.waitKey(1) & 0xFF
 		
-		cv2.namedWindow('Frame')
-		cv2.setMouseCallback('Frame', draw_roi)
-		
 		if key == ord("0") and markerZero is False:
 			markerZero = True
 			box = cv2.selectROI("Frame", frame, fromCenter=False, showCrosshair=False)
 			t = dlib.correlation_tracker()
 			rect = dlib.rectangle(int(box[0]), int(box[1]), int(box[0]) + int(box[2]), int(box[1]) + int(box[3]))
-			# markerZeroCoordinates.append((int(box[1]) + (int(box[1]) + int(box[3]))) / 2)
 			marker_size.append(int(box[3]))
 			t.start_track(frame, rect)
 			tracker.append(t)
@@ -132,7 +90,6 @@ def manual_mode_run():
 			box = cv2.selectROI("Frame", frame, fromCenter=False, showCrosshair=False)
 			t = dlib.correlation_tracker()
 			rect = dlib.rectangle(int(box[0]), int(box[1]), int(box[0]) + int(box[2]), int(box[1]) + int(box[3]))
-			# markerOneCoordinates.append((int(box[1]) + (int(box[1]) + int(box[3]))) / 2)
 			marker_size.append(int(box[3]))
 			t.start_track(frame, rect)
 			tracker.append(t)

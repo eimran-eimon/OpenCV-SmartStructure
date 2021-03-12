@@ -8,6 +8,7 @@ import gui
 
 
 def automated_mode_run():
+	
 	arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 	arucoParams = cv2.aruco.DetectorParameters_create()
 	arucoParams.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
@@ -33,14 +34,11 @@ def automated_mode_run():
 			vs = VideoStream(selected_camera_port + + cv2.CAP_DSHOW).start()
 		else:
 			vs = VideoStream(selected_camera_port).start()
-	# time.sleep(2.0)
+
 	elif input_method == 1:
 		print("[INFO] starting file video stream...")
 		file_name = gui.browse_sample_video()
 		vs = FileVideoStream(file_name).start()
-	
-	# vs = VideoStream(0).start()
-	# time.sleep(2.0)
 	
 	# instruction texts
 	def default_instruction_texts():
