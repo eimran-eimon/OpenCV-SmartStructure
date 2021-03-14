@@ -29,7 +29,7 @@ def manual_mode_run():
 		print("[INFO] starting video stream...")
 		selected_camera_port = gui.show_list_of_cameras()
 		if platform.system() == "Windows":
-			vs = VideoStream(selected_camera_port + + cv2.CAP_DSHOW).start()
+			vs = VideoStream(selected_camera_port + cv2.CAP_DSHOW).start()
 		else:
 			vs = VideoStream(selected_camera_port).start()
 
