@@ -8,13 +8,13 @@ if platform.system() == "Windows":
 	vs = VideoStream(selected_camera_port + cv2.CAP_DSHOW).start()
 else:
 	vs = VideoStream(selected_camera_port).start()
-	
+
 while True:
 	frame = vs.read()
 	
 	cv2.imshow("Frame", frame)
 	key = cv2.waitKey(1) & 0xFF
-
+	
 	if key == 27:
 		cv2.destroyAllWindows()
 		vs.stop()
