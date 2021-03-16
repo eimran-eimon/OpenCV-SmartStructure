@@ -1,5 +1,6 @@
 fpdf==1.7.2
 opencv_contrib_python
+pytest
 numpy==1.17.4
 dlib==19.21.1
 imutils==0.5.3

@@ -1,2 +1,2 @@
 def test_sample_case():
-	assert True
+	return True
