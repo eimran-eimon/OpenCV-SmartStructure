@@ -5,6 +5,15 @@ import numpy as np
 import platform
 import cv2
 import gui
+import sentry_sdk
+sentry_sdk.init(
+    "https://7eab204c7ac44e229cd1c332cf73dff5@o553112.ingest.sentry.io/5679913",
+
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0
+)
 
 
 def automated_mode_run():

@@ -6,10 +6,19 @@ import numpy as np
 import gui
 import cv2
 import platform
+import sentry_sdk
+
+sentry_sdk.init(
+	"https://7eab204c7ac44e229cd1c332cf73dff5@o553112.ingest.sentry.io/5679913",
+	
+	# Set traces_sample_rate to 1.0 to capture 100%
+	# of transactions for performance monitoring.
+	# We recommend adjusting this value in production.
+	traces_sample_rate=1.0
+)
 
 
 def manual_mode_run():
-	
 	markerZero = False  # is marker zero detected
 	markerOne = False  # is marker one detected
 	arucoMarkerSizeInFt = 0.974409449  # 11.7 inch
@@ -32,12 +41,12 @@ def manual_mode_run():
 			vs = VideoStream(selected_camera_port + cv2.CAP_DSHOW).start()
 		else:
 			vs = VideoStream(selected_camera_port).start()
-
+	
 	elif input_method == 1:
 		print("[INFO] starting file video stream...")
 		file_name = gui.browse_sample_video()
 		vs = FileVideoStream(file_name).start()
-		
+	
 	# instruction texts
 	def default_instruction_texts():
 		# cv2.putText(frame, "Key c - Cancel the selections", (50, 130), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (250, 0, 20), 2)
@@ -115,9 +124,11 @@ def manual_mode_run():
 					cv2.putText(frame, str(l), (startX, startY - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
 		
 		if markerZero is False:
-			cv2.putText(frame, f"key 0 => Select an A4 paper and then press ENTER", (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+			cv2.putText(frame, f"key 0 => Select an A4 paper and then press ENTER", (50, 30), cv2.FONT_HERSHEY_SIMPLEX,
+			            0.6, (0, 0, 255), 2)
 		if markerOne is False:
-			cv2.putText(frame, f"key 1 => Select an A4 paper and then press ENTER", (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+			cv2.putText(frame, f"key 1 => Select an A4 paper and then press ENTER", (50, 80), cv2.FONT_HERSHEY_SIMPLEX,
+			            0.6, (0, 0, 255), 2)
 		
 		default_instruction_texts()
 		
@@ -125,11 +136,12 @@ def manual_mode_run():
 		# print(f"Total displacement: {total_displacement_in_px}")
 		if total_displacement_in_px > 0:
 			displacement = (arucoMarkerSizeInFt / np.mean(marker_size)) * total_displacement_in_px
-			cv2.putText(frame, "Sinked: {:.2f}ft".format(displacement), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+			cv2.putText(frame, "Sinked: {:.2f}ft".format(displacement), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1,
+			            (0, 0, 255), 2)
 		
 		# show the output frame
 		cv2.imshow("Frame", frame)
-
+		
 		# if the `ESC` key was pressed, break from the loop
 		if key == 27:
 			cv2.destroyAllWindows()
