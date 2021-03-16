@@ -39,7 +39,7 @@ def browse_sample_video():
 
 def show_list_of_cameras():
 	# working_camera_list = camera_list.working_camera_list_ports()
-	layout = [[sg.Button(f"Web camera", key=0), sg.Button(f"External Camera", key=1)]]
+	layout = [[sg.Button("Web camera", key=0), sg.Button("External Camera", key=1)]]
 	window = sg.Window('Select a camera', layout)
 	event, values = window.read()
 	window.close()
@@ -47,7 +47,7 @@ def show_list_of_cameras():
 
 
 def browse_or_camera():
-	layout = [[sg.Button(f"Camera", key=0), sg.Text(f"___________OR___________", key=5), sg.Button(f"Browse", key=1)]]
+	layout = [[sg.Button("Camera", key=0), sg.Text("___________OR___________", key=5), sg.Button("Browse", key=1)]]
 	window = sg.Window('Select an input method', layout)
 	event, values = window.read()
 	window.close()

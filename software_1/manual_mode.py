@@ -124,10 +124,10 @@ def manual_mode_run():
 					cv2.putText(frame, str(l), (startX, startY - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
 		
 		if markerZero is False:
-			cv2.putText(frame, f"key 0 => Select an A4 paper and then press ENTER", (50, 30), cv2.FONT_HERSHEY_SIMPLEX,
+			cv2.putText(frame, "key 0 => Select an A4 paper and then press ENTER", (50, 30), cv2.FONT_HERSHEY_SIMPLEX,
 			            0.6, (0, 0, 255), 2)
 		if markerOne is False:
-			cv2.putText(frame, f"key 1 => Select an A4 paper and then press ENTER", (50, 80), cv2.FONT_HERSHEY_SIMPLEX,
+			cv2.putText(frame, "key 1 => Select an A4 paper and then press ENTER", (50, 80), cv2.FONT_HERSHEY_SIMPLEX,
 			            0.6, (0, 0, 255), 2)
 		
 		default_instruction_texts()

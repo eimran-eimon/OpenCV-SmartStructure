@@ -170,9 +170,9 @@ def automated_mode_run():
 			cv2.putText(frame, "Sinked: {:.2f}ft".format(displacement), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1,
 			            (0, 0, 255), 2)
 		if markerZero is False:
-			cv2.putText(frame, f"Marker: 0 is not found yet!", (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+			cv2.putText(frame, "Marker: 0 is not found yet!", (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 		if markerOne is False:
-			cv2.putText(frame, f"Marker: 1 is not found yet!", (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+			cv2.putText(frame, "Marker: 1 is not found yet!", (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 		
 		# show the output frame
 		cv2.imshow("Frame", frame)
