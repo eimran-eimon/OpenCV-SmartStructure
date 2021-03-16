@@ -11,8 +11,8 @@
         <img src="https://img.shields.io/badge/Contributor-Eimran_Eimon-<COLOR>.svg" /></a>
     <a href="http://ForTheBadge.com/images/badges/made-with-python.svg" alt="Backers on Open Collective">
         <img src="http://ForTheBadge.com/images/badges/made-with-python.svg" /></a>
-    <a href="https://img.shields.io/badge/Release-Software_I-blue.svg" alt="Sponsors on Open Collective">
-        <img src="https://img.shields.io/badge/Release-Software_I-blue.svg" /></a>
+    <a href="https://travis-ci.com/eimran-eimon/computer-vision-piller-sink.svg?token=XxaMCF4ytuWzyTXwpRcy&branch=software_v2.0.0">
+        <img src="https://travis-ci.com/eimran-eimon/computer-vision-piller-sink.svg?token=XxaMCF4ytuWzyTXwpRcy&branch=software_v2.0.0" /></a>
 </p>
 
 
@@ -166,4 +166,4 @@ Acknowledgments will be added later.
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [contributors-shield]: https://img.shields.io/badge/Contributor-Eimran_Eimon-<COLOR>.svg
 [made-with-python]: http://ForTheBadge.com/images/badges/made-with-python.svg
-[gitHub-release]: https://img.shields.io/badge/Release-Software_I-blue.svg
+[gitHub-release]: https://travis-ci.com/eimran-eimon/computer-vision-piller-sink.svg?token=XxaMCF4ytuWzyTXwpRcy&branch=software_v2.0.0
