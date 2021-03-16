@@ -7,12 +7,11 @@
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
 <p align="center">
- <a href="https://img.shields.io/badge/Contributor-Eimran_Eimon-<COLOR>.svg" alt="Contributors">
-        <img src="https://img.shields.io/badge/Contributor-Eimran_Eimon-<COLOR>.svg" /></a>
+<a href="https://deepsource.io/gh/eimran-eimon/computer-vision-piller-sink/?ref=repository-badge" target="_blank"><img alt="DeepSource" title="DeepSource" src="https://deepsource.io/gh/eimran-eimon/computer-vision-piller-sink.svg/?label=active+issues&show_trend=true&token=gR_nZHVTVIQ6ml4q7-FZBWge"/></a>
     <a href="http://ForTheBadge.com/images/badges/made-with-python.svg" alt="Backers on Open Collective">
         <img src="http://ForTheBadge.com/images/badges/made-with-python.svg" /></a>
-    <a href="https://travis-ci.com/eimran-eimon/computer-vision-piller-sink.svg?token=XxaMCF4ytuWzyTXwpRcy&branch=software_v2.0.0">
-        <img src="https://travis-ci.com/eimran-eimon/computer-vision-piller-sink.svg?token=XxaMCF4ytuWzyTXwpRcy&branch=software_v2.0.0" /></a>
+    <a href="https://travis-ci.com/eimran-eimon/computer-vision-piller-sink.svg?token=XxaMCF4ytuWzyTXwpRcy&branch=main">
+        <img src="https://travis-ci.com/eimran-eimon/computer-vision-piller-sink.svg?token=XxaMCF4ytuWzyTXwpRcy&branch=main" /></a>
 </p>
 
 
