@@ -20,7 +20,7 @@
 
 
 <!-- PROJECT LOGO -->
-<br />
+<hr>
 <p align="center">
   <a href="https://github.com/eimran-eimon/computer-vision-piller-sink/">
     <img src="readme_resources/logo.png" alt="Logo">
