@@ -121,7 +121,7 @@ def generate_templates(template_no):
     return templates_coord
 
 
-# generate template's coordinates
+# divide and generate template's coordinates
 def divide_template_hor_ver(template_no_h, template_no_v):
     roi_h = abs(rect[1] - rect[3])
     roi_v = abs(rect[0] - rect[2])
@@ -142,7 +142,7 @@ def divide_template_hor_ver(template_no_h, template_no_v):
     return templ_coord
 
 
-# generate template's coordinates
+# find best template's coordinates
 def find_best_template(frame_to_get_templ, templ_coords):
     cnt_len_list = []
     
@@ -218,9 +218,6 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
                 rect = tuple(rect_list)
             
             template_h = np.abs(rect[1] - rect[3]) / no_of_template
-            # print(f"Calculated distance = {red_line_dist}")
-            print(t)
-            print(time.time())
             if template is None or len(template_match_coord) == 20 or time.time() - t > 5:
                 t = time.time()
                 # print(f"resetting... {median_del_y}, {sinked}")
@@ -234,10 +231,7 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
                 template_coord = generate_templates(no_of_template)
                 templates_coord = divide_template_hor_ver(template_no_h=3, template_no_v=3)
                 best_templ_idx = int(find_best_template(frame_gray, templates_coord))
-               
-                # select the upper template
-                # upper_template = template_coord[0]
-                
+
                 # select the best template
                 best_template = templates_coord[best_templ_idx]
                 
@@ -247,12 +241,10 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
                 
                 # reset top left coordinates
                 prev_top_left = abs(rect[1] - best_template[0][1])
-                # print(f"prev ->{prev_top_left}")
                 
                 # reset median_del_y for the current template
                 median_del_y = abs(rect[1] - best_template[0][1])
-                # print(f"median_del_y ->{median_del_y}")
-                
+
             # print(len(np.unique(template)))
             # show the template
             cv2.imshow('template', template)
@@ -265,7 +257,6 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
             top_left = min_loc
             
             current_y = top_left[1]
-            # print(f"curr Y {current_y}, prev_top_left {prev_top_left}")
             # find the next best match
             if abs(current_y - prev_top_left) > max_displacement_per_frame:
                 match_result = np.array(res).flatten()
