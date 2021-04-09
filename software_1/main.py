@@ -323,7 +323,7 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
 		cv2.imshow('frame', frame)
 		frame_no += 1
 		# get the key input value
-		k = cv2.waitKey(10) & 0xff
+		k = cv2.waitKey(12) & 0xff
 		
 		if k == ord('r'):
 			release_resources()
