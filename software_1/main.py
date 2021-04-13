@@ -47,10 +47,13 @@ max_pixel_movement = 5
 max_displacement_per_frame = 2
 
 sampling_rate = 20  # 20 frame
-refresh_rate = 5  # 5s
+refresh_rate = 2  # 5s
 
 prev_sinked = -math.inf
-sinked = 0
+sinked_weights = 0
+sinked_mean = 0
+sinked_median = 0
+sinked_vote = 0
 
 # config variables
 template_dict = {}
@@ -181,7 +184,7 @@ def find_majority(votes):
     top_two = vote_count.most_common(2)
     # print(top_two)
     if len(top_two) > 1 and top_two[0][1] == top_two[1][1]:
-        # It is a tie
+        # It is a tie, calc mean
         return top_two[0][0] if top_two[0][0] < top_two[0][1] else top_two[0][1]
     return top_two[0][0]
 
@@ -240,24 +243,29 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
 
             # reset templates
             if not any(template_dict) or isTemplateMatchCoordLen(template_match_coord_dict,
-                                                                 int(input_fps)) or time.time() - t > refresh_rate:
+                                                                 round(input_fps)) or time.time() - t > refresh_rate:
                 t = time.time()
                 # save data of the previous template
                 if template is not None:
                     displacement = []
                     for key in template_match_coord_dict:
                         match_coord = template_match_coord_dict[key]
-                        print(f"No-> {key}, coord-> {match_coord}")
+                        # print(f"No-> {key}, coord-> {match_coord}")
                         displacement.append(abs(match_coord[0] - match_coord[-1]))
                         # displacement.append(np.max(match_coord) - np.min(match_coord))
 
                     print(f"No-> {displacement}, votes-> {find_majority(displacement)}")
                     # weighted avg
-                    # avg_displacement = np.average(displacement, weights=weights)
-                    avg_displacement = find_majority(displacement)
+                    avg_displacement_weights = np.average(displacement, weights=weights)
+                    avg_displacement_mean = np.mean(displacement)
+                    avg_displacement_median = np.median(displacement)
+                    avg_displacement_votes = find_majority(displacement)
                     # print(f"avg -> {avg_displacement}")
 
-                    sinked = sinked + (avg_displacement / red_line_dist)
+                    sinked_weights = sinked_weights + (avg_displacement_weights / red_line_dist)
+                    sinked_mean = sinked_mean + (avg_displacement_mean / red_line_dist)
+                    sinked_median = sinked_median + (avg_displacement_median / red_line_dist)
+                    sinked_vote = sinked_vote + (avg_displacement_votes / red_line_dist)
 
                 # clear all the previous template's coordinates
                 template_match_coord_dict.clear()
@@ -309,13 +317,16 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
                               color[idx],
                               2)
 
-            cv2.putText(frame, "Sinked: {:.2f}ft".format(sinked), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            cv2.putText(frame, "sinked_weights: {:.2f}ft".format(sinked_weights), (50, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+            cv2.putText(frame, "sinked_mean: {:.2f}ft".format(sinked_mean), (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+            cv2.putText(frame, "sinked_median: {:.2f}ft".format(sinked_median), (50, 170), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+            cv2.putText(frame, "sinked_vote: {:.2f}ft".format(sinked_vote), (50, 240), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
             # watch for change in measurement
-            if sinked > prev_sinked:
-                # write to the csv file
-                csv_writer.writerows([[datetime.now().strftime('%Y-%m-%d %H:%M:%S'), round(sinked, 4)]])
-                prev_sinked = sinked
+            # if sinked > prev_sinked:
+            #     # write to the csv file
+            #     csv_writer.writerows([[datetime.now().strftime('%Y-%m-%d %H:%M:%S'), round(sinked, 4)]])
+            #     prev_sinked = sinked
 
         # change the instruction text and color according to the UX logic
         instruction_text = ""
@@ -329,7 +340,7 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
             instruction_color = (0, 0, 255)
 
         # put instruction texts on the screen
-        put_instruction_texts()
+        # put_instruction_texts()
 
         # calc FPS
         counter += 1
@@ -339,14 +350,14 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
             start_time = time.time()
 
         cv2.putText(frame, f"Frame No: {frame_no}, FPS: {round(fps)}",
-                    (50, 80), cv2.FONT_HERSHEY_SIMPLEX,
+                    (50, 310), cv2.FONT_HERSHEY_SIMPLEX,
                     0.8, (0, 0, 0), 2)
 
         # show the resultant frame
         cv2.imshow('frame', frame)
         frame_no += 1
         # get the key input value
-        k = cv2.waitKey(1) & 0xff
+        k = cv2.waitKey(10) & 0xff
 
         if k == ord('r'):
             release_resources()
