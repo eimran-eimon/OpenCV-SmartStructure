@@ -8,10 +8,19 @@ from datetime import datetime
 import os
 import math
 import csv
-from numpy import random
 import gui
 from argparse import ArgumentParser
 import PySimpleGUI as sg
+import sentry_sdk
+
+sentry_sdk.init(
+    "https://7eab204c7ac44e229cd1c332cf73dff5@o553112.ingest.sentry.io/5679913",
+
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0
+)
 
 parser = ArgumentParser()
 parser.add_argument("-i", "--input", dest="input", help="Video file path")
