@@ -1,2 +1,4 @@
-input: browse # camera or browse
+input: browse # "camera" or "browse"
+record: 0 # "1": Record the video, "0": Do not record the video
+unit: 1 # unit in ft
 
