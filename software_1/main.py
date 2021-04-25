@@ -254,7 +254,7 @@ with open(data_filename, 'w', newline='', encoding='utf-8') as csv_file:
 					
 					sinked = sinked + (avg_displacement / red_line_dist)
 				
-				print(red_line_dist)
+				# print(red_line_dist)
 				# clear all the previous template's coordinates
 				template_match_coord_dict.clear()
 				template_dict.clear()
